@@ -1,0 +1,4 @@
+roles/common/files/*_authorized_keys
+devinventory
+devplaybook.yaml
+opc.code-workspace

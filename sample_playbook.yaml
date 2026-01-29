@@ -1,0 +1,5 @@
+---
+- hosts: linuxServers
+  become: true
+  roles:
+    - ccdc-baseline-security
