@@ -2,38 +2,32 @@
 ---
 - name: Create admin user
   ansible.builtin.user:
-    name: "{{ admin_user }}"
+    name: "{{ adminUser }}"
     state: present
     create_home: yes
 
 - name: Add admin to sudoers
   ansible.builtin.lineinfile:
     dest: /etc/sudoers
-    regexp: '^{{ admin_user }}'
-    line: '{{ admin_user }} ALL=(ALL) NOPASSWD: ALL'
+    regexp: '^{{ adminUser }}'
+    line: '{{ adminUser }} ALL=(ALL) NOPASSWD: ALL'
     state: present
     validate: 'visudo -cf %s'
 
 - name: Create .ssh directory
   ansible.builtin.file:
-    path: "/home/{{ admin_user }}/.ssh"
+    path: "/home/{{ adminUser }}/.ssh"
     state: directory
 
 - name: Add SSH key for admin user
   ansible.builtin.copy:
     src: ssh_pubkey.pub
-    dest: "/home/{{ admin_user }}/.ssh/authorized_keys"
-    owner: "{{ admin_user }}" 
-    group: "{{ admin_user }}"
+    dest: "/home/{{ adminUser }}/.ssh/authorized_keys"
+    owner: "{{ adminUser }}" 
+    group: "{{ adminUser }}"
     mode: '0600'
-
-- name: Does bash exist?
-  ansible.builtin.stat:
-    path: /bin/bash
-  register: bash_exists
 
 - name: Change to bash shell
   ansible.builtin.user:
-    name: ccdcadmin
+    name: "{{ adminUser }}"
     shell: /bin/bash
-  when: bash_exists

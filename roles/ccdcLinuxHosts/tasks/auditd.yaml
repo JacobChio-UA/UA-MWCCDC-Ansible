@@ -23,7 +23,4 @@
     mode: '0400'
 
 - name: Restart auditd and enable
-  ansible.builtin.service:
-    name: auditd 
-    state: restarted
-    enabled: true
+  ansible.builtin.shell: 'auditctl --signal enable && systemctl restart auditd && systemctl enable auditd'

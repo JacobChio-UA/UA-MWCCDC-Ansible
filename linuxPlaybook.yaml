@@ -1,5 +1,6 @@
 ---
 - hosts: linuxServers
+  gather_facts: true
   become: true
   roles:
-    - ccdc-baseline-security
+    - ccdcLinuxHosts

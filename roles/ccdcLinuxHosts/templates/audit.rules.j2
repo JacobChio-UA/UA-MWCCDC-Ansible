@@ -240,7 +240,7 @@
 
 ## root ssh key tampering
 -w /root/.ssh -p wa -k rootkey
--w /home/{{ admin_user }}/.ssh -p wa -k rootkey
+-w /home/{{ adminUser }}/.ssh -p wa -k rootkey
 
 # Systemd
 -w /bin/systemctl -p x -k systemd
@@ -743,7 +743,7 @@
 -a always,exit -F arch=b64 -S shmget -k Inter-Process_Communication
 
 # High Volume Events ----------------------------------------------------------
-{% if auditd_highvolumeevents == true %}
+{% if auditdHighVolumeEvents == true %}
 ## Disable these rules if they create too many events in your environment
 
 ## Common Shells

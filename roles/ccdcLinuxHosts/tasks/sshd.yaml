@@ -10,7 +10,7 @@
     - regexp: "^PermitRootLogin"
       line: "PermitRootLogin no"
   notify: Restart ssh   # This handler runs only if change made
-  when: disable_root == true
+  when: disableRoot == true
 
 - name: Disable password authentication
   ansible.builtin.lineinfile:
@@ -23,4 +23,4 @@
     - regexp: "^PasswordAuthentication"
       line: "PasswordAuthentication no"
   notify: Restart ssh   # This handler runs only if change made
-  when: disable_password == true
+  when: disablePassword == true
