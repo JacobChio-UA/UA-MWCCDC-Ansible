@@ -4,6 +4,7 @@
       - vim
       - git
       - dnf-automatic
+      - nano
     state: latest
 
 - name: Ensure dnf-automatic is running/enabled

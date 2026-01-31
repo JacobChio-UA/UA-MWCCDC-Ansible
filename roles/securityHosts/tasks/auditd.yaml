@@ -1,3 +1,4 @@
+# Installs and configures auditd
 ---
 - name: Install auditd package | Debian/Ubuntu
   ansible.builtin.package:
@@ -13,8 +14,16 @@
   tags: auditd
   when: (ansible_facts['os_family'] == "Alpine") or (ansible_facts['os_family'] == "Archlinux") or (ansible_facts['os_family'] == "RedHat") or (ansible_facts['os_family'] == "Suse")
 
+- name: Copy auditd rules
+  ansible.builtin.template:
+    src: audit.rules.j2
+    dest: /etc/audit/rules.d/audit.rules
+    owner: root
+    group: root
+    mode: '0400'
+
 - name: Restart auditd and enable
   ansible.builtin.service:
-    name: httpd
+    name: auditd 
     state: restarted
     enabled: true

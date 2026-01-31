@@ -1,0 +1,52 @@
+LinuxServers:
+   hosts:
+    UbuntuEcom:
+      public:    172.25.20x.11
+      private: 172.20.242.30
+      defaultUser: sysadmin
+      defaultPassword: changeme
+    FedoraWebmail:
+      public: 172.25.20x.39
+      private: 172.20.242.30
+      defaultUser: sysadmin
+      defaultPassword: changeme
+    Splunk:
+      public: 172.25.20x.9
+      private: 172.20.242.30    
+      defaultUser: sysadmin
+      defaultPasssword: changeme
+WindowsServers:
+    hosts:
+    Server2019AD:
+      public: 172.25.20x.155
+      private: 172.20.240.102
+      defaultUser: administrator
+      defaultPassword: '!Password123'
+    Server2019Web:
+      public: 172.25.20x.140
+      private: 172.20.240.101
+      defaultUser: administrator
+      defaultPassword: '!Password123'
+    Server2022FTP:
+      public: 172.25.20x.162
+      private: 172.20.240.104
+      defaultUser: administrator
+      defaultPassword: '!Password123'
+CiscoFirewalls:
+    hosts:
+    CiscoFTD:
+      mgmt: 172.20.242.150
+      defaultUser: admin
+      defaultPassword: Changeme123
+PaloAltoFireWalls:
+    hosts:
+    PaloAlto:
+      mgmt: 172.20.240.200
+      defaultUser: admin
+      defaultPassword: '!Changeme123'
+VyOSRouter:
+    hosts:
+    border:
+      ip: 172.16.101.1
+      defaultUser: vyos
+      defaultPassword: changeme

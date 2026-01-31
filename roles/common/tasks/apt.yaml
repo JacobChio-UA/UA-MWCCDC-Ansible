@@ -3,6 +3,7 @@
     name:
       - vim
       - git
+      - nano
       - unattended-upgrades
       - update-notifier-common
     state: latest
