@@ -1,7 +1,9 @@
 ---
-# - name: Import Python bootstrap task
-#   import_tasks: bootstrap.yaml
-#   when: bootstrap == true
+
+- name: import repairPackageManagers.yaml
+  import_tasks: repairPackageManagers.yaml
+  when: rotatePubkey == false
+  ignore_errors: true
 
 - name: Import sudo task
   import_tasks: sudo.yaml
