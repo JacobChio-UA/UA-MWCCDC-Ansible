@@ -4,3 +4,8 @@
   become: true
   roles:
     - ccdcLinuxHosts
+- hosts: ubuntuEcom
+  gather_facts: false
+  become: true
+  roles:
+    - ecom
