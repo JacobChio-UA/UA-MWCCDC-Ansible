@@ -12,13 +12,17 @@ echo "[+] Starting Wazuh agent installation"
 echo "[+] Manager IP: $MANAGER_IP"
 
 # -------------------------
-# Verify Ubuntu 24
+# Robust Ubuntu 24.04 check
 # -------------------------
-echo "[!] This script is intended for Ubuntu 24.04"
+OS_VERSION=$(grep VERSION_ID /etc/os-release | cut -d '"' -f2)
+
+if [[ "$OS_VERSION" != 24.04* ]]; then
+    echo "[!] This script is intended for Ubuntu 24.04"
+    echo "[!] Detected VERSION_ID: $OS_VERSION"
     exit 1
 fi
 
-echo "[+] Ubuntu 24.04 confirmed"
+echo "[+] Ubuntu 24.04 detected"
 
 # -------------------------
 # Update and install deps
