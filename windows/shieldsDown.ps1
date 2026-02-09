@@ -62,9 +62,6 @@ if ($broken) {
     Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?LinkId=212732" -OutFile "msert.exe"
     Start-Process -FilePath "msert.exe" -ArgumentList "/Q" -Wait
     Start-Process -FilePath "msert.exe" -ArgumentList "/F:Y /Q"
-    if (Test-Path .\msert.exe) {
-        Remove-Item .\msert.exe -Force
-    }
     start-process "cmd /c `"for /f `"delims=`" %d in ('dir `"%ProgramData%\Microsoft\Windows Defender\Platform`" /ad /b /o:-n') do if not defined _done `"%ProgramData%\Microsoft\Windows Defender\Platform\%d\MpCmdRun.exe`" -RemoveDefinitions -All" -Wait
     New-Item -Path "C:\DefenderTemp" -ItemType Directory; Invoke-Command {reg export 'HKLM\SOFTWARE\Policies\Microsoft\Windows Defender' C:\DefenderTemp\_DefenderAVBackup.reg}
     try{DISM /Online /Cleanup-Image /RestoreHealth}
