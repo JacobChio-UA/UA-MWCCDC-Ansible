@@ -554,8 +554,6 @@ main() {
   # Intrusion prevention
   harden_fail2ban
   
-  # Application-specific
-  harden_opencart_admin
   
   # Logging & monitoring
   harden_auditd
