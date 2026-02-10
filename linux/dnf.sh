@@ -28,7 +28,7 @@ fi
 os_like_lc=$(printf "%s" "${OS_ID_LIKE:-}${OS_ID:-}" | tr '[:upper:]' '[:lower:]')
 
 is_rhel_family=false
-if [ -f /etc/redhat-release ] || printf "%s" "$os_like_lc" | grep -Eq 'rhel|fedora|centos|rocky|almalinux'; then
+if [ -f /etc/redhat-release ] || printf "%s" "$os_like_lc" | grep -Eq 'rhel|fedora|centos|rocky|almalinux|oracle'; then
 	is_rhel_family=true
 fi
 
@@ -93,6 +93,9 @@ almalinux)
 fedora)
 	MIRROR="https://download.fedoraproject.org/pub/fedora/linux/releases/${MAJOR_VER}/Everything/${ARCH}/os"
 	;;
+ol|oracle)
+	MIRROR="https://yum.oracle.com/repo/OracleLinux/OL${MAJOR_VER}/baseos/${ARCH}/"
+	;;
 rhel)
 	MIRROR="https://mirror.centos.org/centos/${MAJOR_VER}/BaseOS/${ARCH}/os"
 	;;
@@ -138,6 +141,15 @@ gpgcheck=0
 EOF
 		;;
 	fedora)
+		cat <<EOF | $SUDO tee /etc/yum.repos.d/00-bootstrap.repo >/dev/null
+[bootstrap-base]
+name=Bootstrap BaseRepo
+baseurl=${MIRROR}
+enabled=1
+gpgcheck=0
+EOF
+		;;
+	ol|oracle)
 		cat <<EOF | $SUDO tee /etc/yum.repos.d/00-bootstrap.repo >/dev/null
 [bootstrap-base]
 name=Bootstrap BaseRepo
