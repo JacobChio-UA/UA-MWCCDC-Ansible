@@ -124,5 +124,3 @@ append_line_if_missing() {
     run "printf '%s\n' '$line' >> '$f'"
   fi
 }
-
-set_kv_conf() {
