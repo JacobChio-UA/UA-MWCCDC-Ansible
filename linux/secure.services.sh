@@ -347,8 +347,8 @@ EOF
     SecDefaultAction "phase:2,log,auditlog,deny,status:403"
 
     # Include OWASP CRS main rules
-    Include /etc/modsecurity/rules/OWASP-CRS/crs-setup.conf
-    Include /etc/modsecurity/rules/OWASP-CRS/rules/*.conf
+    Include /etc/modsecurity/crs/crs-setup.conf
+    Include /etc/modsecurity/crs/rules/*.conf
 </IfModule>
 EOF
   
