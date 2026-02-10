@@ -94,7 +94,7 @@ fedora)
 	MIRROR="https://download.fedoraproject.org/pub/fedora/linux/releases/${MAJOR_VER}/Everything/${ARCH}/os"
 	;;
 ol|oracle)
-	MIRROR="https://yum.oracle.com/repo/OracleLinux/OL${MAJOR_VER}/baseos/${ARCH}/"
+	MIRROR="https://yum.oracle.com/repo/OracleLinux/OL${MAJOR_VER}/baseos/latest/${ARCH}/"
 	;;
 rhel)
 	MIRROR="https://mirror.centos.org/centos/${MAJOR_VER}/BaseOS/${ARCH}/os"
