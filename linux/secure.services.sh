@@ -253,16 +253,16 @@ harden_apache2() {
   
   backup_file "/etc/apache2/apache2.conf"
   
-  # Disable unnecessary modules
-  run "a2dismod -f autoindex"
-  run "a2dismod -f mod_status"
-  run "a2dismod -f mod_info"
+  # Disable unnecessary modules (only if they exist)
+  run "a2dismod autoindex 2>/dev/null || true"
+  run "a2dismod status 2>/dev/null || true"
+  run "a2dismod info 2>/dev/null || true"
   
   # Enable security modules
-  run "a2enmod -f rewrite"
-  run "a2enmod -f headers"
-  run "a2enmod -f ssl"
-  run "a2enmod -f security2"
+  run "a2enmod rewrite 2>/dev/null || true"
+  run "a2enmod headers 2>/dev/null || true"
+  run "a2enmod ssl 2>/dev/null || true"
+  run "a2enmod security2 2>/dev/null || true"
   
   # Harden Apache headers
   cat > /etc/apache2/conf-available/hardening.conf <<'EOF'
@@ -286,7 +286,8 @@ TraceEnable Off
   AllowOverride None
 </Directory>
 EOF
-  run "a2enconf hardening"
+  run "a2enconf hardening 2>/dev/null || true"
+  run "systemctl restart apache2 || true"
 }
 
 harden_modsecurity() {
