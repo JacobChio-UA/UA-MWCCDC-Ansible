@@ -482,38 +482,8 @@ EOF
   run "systemctl restart fail2ban || true"
 }
 
-harden_opencart_admin() {
-  log "Securing OpenCart admin interface..."
-  
-  local opencart_root="/var/www/html"
-  
-  # Protect admin directory with password (htaccess)
-  cat > "${opencart_root}/admin/.htaccess" <<'EOF'
-<FilesMatch "\.(php|php5|php7|phtml)$">
-    Order Deny,Allow
-    Deny from all
-    Allow from 127.0.0.1
-</FilesMatch>
 
-# Prevent access from specific IPs/User-Agents
-SetEnvIf Request_URI ".*" ALLOW
-SetEnvIf User-Agent "^.*bot.*$" NOTALLOW
-Order allow,deny
-Allow from env=ALLOW
-Deny from env=NOTALLOW
-EOF
 
-  # Set proper permissions
-  run "find '${opencart_root}' -type f -exec chmod 644 {} \\;"
-  run "find '${opencart_root}' -type d -exec chmod 755 {} \\;"
-  run "chown -R www-data:www-data '${opencart_root}'"
-  
-  # Remove write permission for config files
-  run "chmod 444 '${opencart_root}/config.php' 2>/dev/null || true"
-  run "chmod 444 '${opencart_root}/admin/config.php' 2>/dev/null || true"
-  
-  log "*** CRITICAL: Change OpenCart admin password immediately! ***"
-}
 
 harden_user_accounts() {
   log "Hardening user accounts..."
