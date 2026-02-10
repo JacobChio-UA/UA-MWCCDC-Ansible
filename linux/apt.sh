@@ -148,28 +148,28 @@ else
 		log "No active APT entries found; restoring minimal default repositories (backup: $backup)"
 		case "${OS_ID:-debian}" in
 		debian)
-			cat <<EOF | $SUDO tee /etc/apt/sources.list >/dev/null
-		deb http://deb.debian.org/debian ${CODENAME} main contrib non-free
-		deb http://security.debian.org/debian-security ${CODENAME}-security main contrib non-free
-		deb http://deb.debian.org/debian ${CODENAME}-updates main contrib non-free
-		EOF
+			cat <<-EOF | $SUDO tee /etc/apt/sources.list >/dev/null
+			deb http://deb.debian.org/debian ${CODENAME} main contrib non-free
+			deb http://security.debian.org/debian-security ${CODENAME}-security main contrib non-free
+			deb http://deb.debian.org/debian ${CODENAME}-updates main contrib non-free
+			EOF
 			;;
 		ubuntu)
-			cat <<EOF | $SUDO tee /etc/apt/sources.list >/dev/null
-		deb http://archive.ubuntu.com/ubuntu ${CODENAME} main restricted universe multiverse
-		deb http://archive.ubuntu.com/ubuntu ${CODENAME}-updates main restricted universe multiverse
-		deb http://security.ubuntu.com/ubuntu ${CODENAME}-security main restricted universe multiverse
-		EOF
+			cat <<-EOF | $SUDO tee /etc/apt/sources.list >/dev/null
+			deb http://archive.ubuntu.com/ubuntu ${CODENAME} main restricted universe multiverse
+			deb http://archive.ubuntu.com/ubuntu ${CODENAME}-updates main restricted universe multiverse
+			deb http://security.ubuntu.com/ubuntu ${CODENAME}-security main restricted universe multiverse
+			EOF
 			;;
 		raspbian|raspberrypi)
-			cat <<EOF | $SUDO tee /etc/apt/sources.list >/dev/null
-		deb http://raspbian.raspberrypi.org/raspbian/ ${CODENAME} main contrib non-free rpi
-		EOF
+			cat <<-EOF | $SUDO tee /etc/apt/sources.list >/dev/null
+			deb http://raspbian.raspberrypi.org/raspbian/ ${CODENAME} main contrib non-free rpi
+			EOF
 			;;
 		*)
-			cat <<EOF | $SUDO tee /etc/apt/sources.list >/dev/null
-		deb http://deb.debian.org/debian ${CODENAME} main contrib non-free
-		EOF
+			cat <<-EOF | $SUDO tee /etc/apt/sources.list >/dev/null
+			deb http://deb.debian.org/debian ${CODENAME} main contrib non-free
+			EOF
 			;;
 		esac
 	fi
