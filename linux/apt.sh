@@ -86,8 +86,20 @@ else
 	fi
 	CODENAME=${CODENAME:-stable}
 
-	# determine mirror from existing APT sources if possible
-	MIRROR="https://deb.debian.org/debian"
+	# determine mirror based on distribution
+	case "${OS_ID:-debian}" in
+	ubuntu)
+		MIRROR="https://archive.ubuntu.com/ubuntu"
+		;;
+	raspbian|raspberrypi)
+		MIRROR="https://raspbian.raspberrypi.org/raspbian"
+		;;
+	*)
+		MIRROR="https://deb.debian.org/debian"
+		;;
+	esac
+
+	# override with existing APT sources if available
 	if [ -r /etc/apt/sources.list ]; then
 		first_deb=$(grep -Eo '^deb\s+\S+' /etc/apt/sources.list | awk '{print $2}' | head -n1 || true)
 		if [ -n "$first_deb" ]; then
