@@ -196,9 +196,8 @@ harden_ssh() {
   backup_file "/etc/ssh/sshd_config"
   
   append_line_if_missing "/etc/ssh/sshd_config" "PermitRootLogin no"
-  append_line_if_missing "/etc/ssh/sshd_config" "PasswordAuthentication $SSH_PASSWORD_AUTH"
+  append_line_if_missing "/etc/ssh/sshd_config" "PasswordAuthentication no"
   append_line_if_missing "/etc/ssh/sshd_config" "PubkeyAuthentication yes"
-  append_line_if_missing "/etc/ssh/sshd_config" "PermitEmptyPasswords no"
   append_line_if_missing "/etc/ssh/sshd_config" "X11Forwarding no"
   append_line_if_missing "/etc/ssh/sshd_config" "MaxAuthTries 3"
   append_line_if_missing "/etc/ssh/sshd_config" "ClientAliveInterval 300"
