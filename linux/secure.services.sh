@@ -167,7 +167,7 @@ kernel.kptr_restrict = 2
 kernel.dmesg_restrict = 1
 kernel.printk = 3 3 3 3
 kernel.unprivileged_bpf_disabled = 1
-kernel.unprivileged_ns_clone = 0
+kernel.unprivileged_userns_clone = 0
 kernel.yama.ptrace_scope = 2
 
 # Network hardening
