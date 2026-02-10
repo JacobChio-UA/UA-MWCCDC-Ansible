@@ -318,13 +318,13 @@ SecDataDir /var/cache/modsecurity/
 SecDefaultAction "phase:2,log,auditlog,deny,status:403"
 
 # OWASP CRS
-Include /etc/modsecurity/rules/OWASP-CRS/*.conf
+Include /etc/modsecurity/rules/OWASP-CRS/rules/*.conf
 EOF
   
   # Enable OWASP CRS rules
   if [[ -d "/usr/share/modsecurity-crs" ]]; then
     log "Enabling OWASP ModSecurity Rules..."
-    if [[ ! -d "/etc/modsecurity/rules/OWASP-CRS" ]]; then
+    if [[ ! -d "/etc/modsecurity/rules/OWASP-CRS/rules" ]]; then
       run "mkdir -p /etc/modsecurity/rules"
       run "cp -r /usr/share/modsecurity-crs /etc/modsecurity/rules/OWASP-CRS"
     fi
@@ -348,7 +348,7 @@ EOF
 
     # Include OWASP CRS main rules
     Include /etc/modsecurity/crs/crs-setup.conf
-    Include /etc/modsecurity/crs/rules/*.conf
+    Include /etc/modsecurity/crs/*.conf
 </IfModule>
 EOF
   
