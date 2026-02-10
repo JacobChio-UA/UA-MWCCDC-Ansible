@@ -483,8 +483,6 @@ EOF
 }
 
 
-
-
 harden_user_accounts() {
   log "Hardening user accounts..."
   
