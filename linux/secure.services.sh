@@ -823,6 +823,29 @@ SecDefaultAction "phase:2,log,auditlog,deny,status:403"
 # OWASP CRS
 Include /etc/modsecurity/rules/OWASP-CRS/rules/*.conf
 EOF
+
+  # Add custom active-blocking rules to immediately deny obvious attacks.
+  # These are conservative but will actively `deny` matching requests.
+  cat > /etc/modsecurity/custom_blocking.conf <<'EOF'
+## Custom active blocking rules (conservative)
+## Block known scanner user agents
+SecRule REQUEST_HEADERS:User-Agent "@rx (?:nmap|masscan|nikto|sqlmap|nessus|openvas|acunetix)" \
+  "id:1000001,phase:1,deny,log,msg:'Blocked scanner user-agent',severity:2"
+
+## Block obvious SQLi patterns in query string/args
+SecRule ARGS_NAMES|ARGS|REQUEST_URI "@rx (?:union\s+select|select\s+.*from\s+.*where|drop\s+table|insert\s+into)" \
+  "id:1000002,phase:1,deny,log,msg:'Blocked obvious SQL injection pattern',severity:2"
+
+## Block path traversal and common sensitive file access attempts
+SecRule REQUEST_URI "@rx (?:\.\./|/\.git/|/\.env|/\.htaccess)" \
+  "id:1000003,phase:1,deny,log,msg:'Blocked path traversal or sensitive file access',severity:2"
+
+EOF
+
+  # Ensure our custom rules are included by ModSecurity
+  if ! grep -qF "/etc/modsecurity/custom_blocking.conf" /etc/modsecurity/modsecurity.conf 2>/dev/null; then
+    echo "Include /etc/modsecurity/custom_blocking.conf" >> /etc/modsecurity/modsecurity.conf || true
+  fi
   
   # Enable OWASP CRS rules
   if [[ -d "/usr/share/modsecurity-crs" ]]; then
@@ -858,6 +881,7 @@ EOF
   run "mkdir -p /var/log/modsecurity /var/log/apache2"
   run "chown -R www-data:www-data /var/log/modsecurity /var/cache/modsecurity 2>/dev/null || true"
   
+  # Restart Apache so ModSecurity + custom rules take effect
   run "systemctl restart apache2 || true"
 }
 
