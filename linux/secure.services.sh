@@ -125,6 +125,20 @@ append_line_if_missing() {
   fi
 }
 
+chmod_with_fallback() {
+  local perms="$1" primary="$2" fallback="$3"
+  if [[ -f "$primary" ]]; then
+    run "chmod $perms '$primary'" || {
+      warn "Failed to chmod $primary, attempting fallback $fallback..."
+      [[ -f "$fallback" ]] && run "chmod $perms '$fallback'" || warn "Neither $primary nor $fallback exist"
+    }
+  elif [[ -f "$fallback" ]]; then
+    run "chmod $perms '$fallback'"
+  else
+    warn "Neither $primary nor $fallback exist"
+  fi
+}
+
 # ...existing code...
 
 ###############################################################################
@@ -147,7 +161,7 @@ harden_filesystem() {
   run "chmod 600 /etc/gshadow"
   run "chmod 644 /etc/passwd"
   run "chmod 644 /etc/group"
-  run "chmod 600 /etc/ssh/sshd_config"
+  chmod_with_fallback "600" "/etc/ssh/sshd_config" "/etc/ssh/ssh_config"
   
   cat > /etc/modprobe.d/disable-filesystems.conf <<'EOF'
 install cramfs /bin/true
