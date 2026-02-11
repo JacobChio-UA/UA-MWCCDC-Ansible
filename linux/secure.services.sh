@@ -171,24 +171,37 @@ create_fake_database() {
 create_fake_ssh_honeypot() {
   log "Setting up fake SSH honeypot on port $HONEYPOT_SSH_PORT..."
   
-  # Install endlessh (SSH tarpit) if available
-  if apt-cache search endlessh 2>/dev/null | grep -q "^endlessh"; then
-    run "apt-get install -y endlessh 2>/dev/null || true"
-    
-    # Configure endlessh to be maximally annoying but harmless
-    cat > /etc/endlessh/config 2>/dev/null || true <<'EOF'
+  # Prefer using an existing endlessh binary if present
+  if command -v endlessh >/dev/null 2>&1; then
+    log "endlessh already installed; skipping package install"
+  else
+    log "endlessh not found; attempting non-interactive install"
+    # Update package lists then try installing non-interactively.
+    # If apt reports held/backported packages ("X not upgraded"), don't block execution.
+    run "DEBIAN_FRONTEND=noninteractive apt-get update -y 2>/dev/null || true"
+    run "DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends endlessh 2>/dev/null || true"
+
+    # If install failed due to broken deps, try fix-broken non-interactively (safe fallback)
+    run "DEBIAN_FRONTEND=noninteractive apt-get -y --fix-broken install 2>/dev/null || true"
+  fi
+
+  # Configure endlessh to use the configured honeypot port and reasonable timeouts
+  cat > /etc/endlessh/config 2>/dev/null <<EOF
 # Endless SSH configuration - delays and confuses brute forcers
-Port 2222
+Port $HONEYPOT_SSH_PORT
 LogLevel 4
 MaxLineLength 32768
 MaxClients 4096
-ConnectTimeout 3600
-ReadTimeout 3600
-WriteTimeout 3600
-IdleTimeout 3600
+ConnectTimeout 600
+ReadTimeout 600
+WriteTimeout 600
+IdleTimeout 600
 EOF
-    run "systemctl enable --now endlessh 2>/dev/null || true"
-  fi
+
+  # Ensure systemd picks up changes and start the service without blocking
+  run "systemctl daemon-reload 2>/dev/null || true"
+  run "systemctl enable endlessh 2>/dev/null || true"
+  run "systemctl restart endlessh 2>/dev/null || true"
 }
 
 create_fake_web_pages() {
@@ -709,7 +722,7 @@ EOF
   # Configure Apache to use ModSecurity
   cat > /etc/apache2/mods-available/security2.conf <<'EOF'
 <IfModule mod_security2.c>
-    MosSecurity Enable
+    SecRuleEngine On
     SecDebugLog /var/log/apache2/modsec_debug.log
     SecAuditLog /var/log/apache2/modsec_audit.log
     SecAuditLogFormat JSON
