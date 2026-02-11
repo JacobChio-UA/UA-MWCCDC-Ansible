@@ -35,12 +35,59 @@ if [ "$is_debian_family" != true ]; then
 	exit 2
 fi
 
+# Test if apt is actually functional (not just binary present)
+test_apt_functional() {
+	if ! command -v apt >/dev/null 2>&1; then
+		return 1
+	fi
+	
+	# Try a simple apt operation to verify it works
+	if $SUDO apt --version >/dev/null 2>&1; then
+		# Further test: try updating package lists (non-interactive)
+		if DEBIAN_FRONTEND=noninteractive timeout 30 $SUDO apt update >/dev/null 2>&1; then
+			return 0
+		fi
+	fi
+	return 1
+}
+
+# Purge all apt-related files and packages (for broken installations)
+purge_apt() {
+	log "Purging broken apt installation..."
+	
+	# Remove apt package
+	if command -v apt >/dev/null 2>&1; then
+		$SUDO apt-get purge -y apt apt-utils 2>/dev/null || log "apt-get purge failed (continuing)"
+	fi
+	
+	# Remove using dpkg if apt is gone
+	if command -v dpkg >/dev/null 2>&1; then
+		$SUDO dpkg --purge apt apt-utils 2>/dev/null || log "dpkg purge failed (continuing)"
+	fi
+	
+	# Remove apt-related files and directories
+	log "Removing apt-related files and configurations..."
+	$SUDO rm -rf /var/lib/apt/* 2>/dev/null || true
+	$SUDO rm -rf /var/cache/apt/* 2>/dev/null || true
+	$SUDO rm -rf /etc/apt/* 2>/dev/null || true
+	$SUDO rm -f /usr/bin/apt /usr/bin/apt-get /usr/bin/apt-cache 2>/dev/null || true
+	$SUDO rm -f /usr/lib/apt/* 2>/dev/null || true
+	
+	log "Purge complete"
+}
+
+# Check if apt is installed AND functional
 if command -v apt >/dev/null 2>&1; then
-	log "apt is already installed: $(command -v apt)"
-	exit 0
+	if test_apt_functional; then
+		log "apt is already installed and functional: $(command -v apt)"
+		exit 0
+	else
+		log "apt binary found but installation is broken. Purging and reinstalling..."
+		purge_apt
+	fi
 fi
 
-log "apt not found. Attempting to install on Debian-family distro..."
+log "apt not found or purged. Attempting to install on Debian-family distro..."
 
 if command -v apt-get >/dev/null 2>&1; then
 	log "Using apt-get to install apt (non-interactive)..."
