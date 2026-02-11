@@ -31,6 +31,10 @@ set -euo pipefail
 : "${HONEYPOT_SSH_PORT:=2222}"  # Fake SSH service on alternate port
 : "${HONEYPOT_HTTP_PORT:=8080}" # Fake web service on alternate port
 
+# Admin SSH controls (safe defaults: do NOT open 22 globally)
+: "${ADMIN_SSH_ALLOW_FROM:=}"
+: "${ADMIN_SSH_BIND_LOCAL:=0}"
+
 # Anti-automation settings
 : "${BLOCK_SCANNERS:=1}"    # Block common scanners and recon tools
 : "${SLOW_RESPONSES:=1}"    # Intentionally slow responses to waste attacker time
@@ -62,6 +66,16 @@ detect_pkg_mgr() {
   else
     die "No supported package manager found (apt/dnf/yum)."
   fi
+}
+
+is_ssh_active() {
+  # Return 0 if an ssh service (ssh or sshd) is present and active, else 1
+  if systemctl list-unit-files --type=service | grep -qE "^ssh\.service|^sshd\.service"; then
+    if systemctl is-active --quiet ssh 2>/dev/null || systemctl is-active --quiet sshd 2>/dev/null; then
+      return 0
+    fi
+  fi
+  return 1
 }
 
 pkg_install() {
@@ -208,6 +222,18 @@ EOF
   # configured port. This ensures it listens on $HONEYPOT_SSH_PORT.
   if ! systemctl list-unit-files | grep -qE "^endlessh\.service"; then
     log "Creating fallback systemd unit for endlessh to ensure binding to $HONEYPOT_SSH_PORT"
+    # Prefer an absolute path to the endlessh binary so systemd doesn't
+    # rely on a PATH lookup via /usr/bin/env which can fail in service context.
+    local endlessh_bin
+    endlessh_bin="$(command -v endlessh || true)"
+    if [[ -n "${endlessh_bin}" ]]; then
+      log "Using endlessh binary at ${endlessh_bin} for systemd unit ExecStart"
+      exec_start_line="${endlessh_bin} -p ${HONEYPOT_SSH_PORT}"
+    else
+      warn "endlessh binary not found in PATH; systemd unit will use /usr/bin/env fallback"
+      exec_start_line="/usr/bin/env endlesssh -p ${HONEYPOT_SSH_PORT}"
+    fi
+
     cat > /etc/systemd/system/endlessh.service <<EOF
 [Unit]
 Description=Endless SSH tarpit
@@ -215,7 +241,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/bin/sh -c '/usr/bin/env endlessh -p $HONEYPOT_SSH_PORT'
+ExecStart=${exec_start_line}
 Restart=always
 RestartSec=5
 
@@ -461,8 +487,14 @@ add_anti_recon_measures() {
   log "Adding anti-reconnaissance measures..."
   
   # Disable SSH banner grabbing
-  sed -i 's/#VersionAddendum.*/VersionAddendum none/' /etc/ssh/sshd_config 2>/dev/null || true
-  run "systemctl restart ssh 2>/dev/null || true"
+  # Only attempt to edit SSH banner if ssh service is active. If SSH is off
+  # for the competition, avoid modifying the config or restarting the service.
+  if is_ssh_active; then
+    sed -i 's/#VersionAddendum.*/VersionAddendum none/' /etc/ssh/sshd_config 2>/dev/null || true
+    run "systemctl restart ssh 2>/dev/null || true"
+  else
+    warn "SSH service not active; skipping SSH banner changes."
+  fi
   
   # Hide PHP version
   for php_conf in /etc/php/*/apache2/php.ini; do
@@ -604,8 +636,15 @@ EOF
 
 harden_ssh() {
   log "Hardening SSH configuration..."
+  # If SSH is disabled for the competition, skip SSH configuration to avoid
+  # attempting to restart or modify a service that is intentionally down.
+  if ! is_ssh_active; then
+    warn "SSH service not active; skipping SSH hardening to avoid interference."
+    return 0
+  fi
+
   backup_file "/etc/ssh/sshd_config"
-  
+
   append_line_if_missing "/etc/ssh/sshd_config" "PermitRootLogin no"
   append_line_if_missing "/etc/ssh/sshd_config" "PasswordAuthentication no"
   append_line_if_missing "/etc/ssh/sshd_config" "PubkeyAuthentication yes"
@@ -615,7 +654,7 @@ harden_ssh() {
   append_line_if_missing "/etc/ssh/sshd_config" "ClientAliveCountMax 2"
   append_line_if_missing "/etc/ssh/sshd_config" "Protocol 2"
   append_line_if_missing "/etc/ssh/sshd_config" "LogLevel VERBOSE"
-  
+
   run "sshd -t || warn 'SSH config syntax error - check manually'"
   restart_service_if_exists "ssh"
 }
@@ -630,7 +669,30 @@ harden_ufw_iptables() {
   run "ufw default deny routed"
   
   # Essential services for OpenCart ecommerce
-  [[ "$ALLOW_SSH" == "1" ]] && run "ufw allow 22/tcp comment 'SSH'"
+  # SSH: by default we avoid opening 22 globally to prevent lockouts.
+  # - If ADMIN_SSH_ALLOW_FROM is set, allow SSH only from that IP/CIDR.
+  # - If ADMIN_SSH_BIND_LOCAL==1, bind sshd to localhost instead (see below).
+  if [[ "$ALLOW_SSH" == "1" ]]; then
+    # If SSH service is intentionally disabled, do not try to add UFW rules or
+    # bind sshd. This prevents interference during competitions where SSH is off.
+    if ! is_ssh_active; then
+      warn "SSH service not active; skipping UFW/sshd rules for port 22."
+    else
+      if [[ -n "${ADMIN_SSH_ALLOW_FROM:-}" ]]; then
+        run "ufw allow from ${ADMIN_SSH_ALLOW_FROM} to any port 22 proto tcp comment 'Admin SSH only'"
+        log "UFW: SSH allowed from ${ADMIN_SSH_ALLOW_FROM} only"
+      elif [[ "${ADMIN_SSH_BIND_LOCAL}" == "1" ]]; then
+        log "Configuring sshd to listen on localhost only (127.0.0.1)"
+        append_line_if_missing "/etc/ssh/sshd_config" "ListenAddress 127.0.0.1"
+        restart_service_if_exists "ssh"
+        log "sshd bound to localhost; no UFW rule added for port 22"
+      else
+        warn "ALLOW_SSH=1 but ADMIN_SSH_ALLOW_FROM is not set and ADMIN_SSH_BIND_LOCAL!=1."
+        warn "To avoid exposing SSH globally the script will NOT add a global ufw allow 22/tcp rule."
+        warn "Set ADMIN_SSH_ALLOW_FROM='<your-ip>' to allow admin access, or set ADMIN_SSH_BIND_LOCAL=1 to bind sshd to localhost."
+      fi
+    fi
+  fi
   [[ "$ALLOW_HTTP" == "1" ]] && run "ufw allow 80/tcp comment 'HTTP'"
   [[ "$ALLOW_HTTPS" == "1" ]] && run "ufw allow 443/tcp comment 'HTTPS'"
   
