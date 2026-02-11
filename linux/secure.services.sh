@@ -217,6 +217,32 @@ EOF
   run "systemctl enable endlessh 2>/dev/null || true"
   run "systemctl restart endlessh 2>/dev/null || true"
 
+  # Check the active unit's ExecStart. If it uses /usr/bin/env endlesssh (which
+  # can fail in systemd), create a drop-in override that sets ExecStart to the
+  # absolute endlessh binary when available.
+  if systemctl list-unit-files | grep -qE "^endlessh\.service"; then
+    current_exec=$(systemctl show -p ExecStart --value endlessh 2>/dev/null || true)
+    if [[ -n "${current_exec}" && "${current_exec}" == *"/usr/bin/env endlesssh"* ]]; then
+      local abs_bin
+      abs_bin="$(command -v endlessh || true)"
+      if [[ -n "${abs_bin}" ]]; then
+        log "Detected /usr/bin/env in ExecStart; writing systemd drop-in to use ${abs_bin}"
+        run "mkdir -p /etc/systemd/system/endlessh.service.d"
+        cat > /etc/systemd/system/endlessh.service.d/override.conf <<EOF
+[Service]
+ExecStart=
+ExecStart=${abs_bin} -p ${HONEYPOT_SSH_PORT}
+Restart=always
+RestartSec=5
+EOF
+        run "systemctl daemon-reload 2>/dev/null || true"
+        run "systemctl restart endlessh 2>/dev/null || true"
+      else
+        warn "ExecStart uses /usr/bin/env endlesssh but absolute binary not found; consider installing endlessh"
+      fi
+    fi
+  fi
+
   # If the package doesn't provide a working unit that binds to our port,
   # create a minimal systemd unit that invokes the endlessh binary with the
   # configured port. This ensures it listens on $HONEYPOT_SSH_PORT.
@@ -678,6 +704,11 @@ harden_ufw_iptables() {
     if ! is_ssh_active; then
       warn "SSH service not active; skipping UFW/sshd rules for port 22."
     else
+      # Remove any existing global 'allow 22' or 'allow ssh' rules to avoid
+      # exposing SSH from anywhere. Use --force to avoid interactive prompts.
+      run "ufw --force delete allow 22/tcp 2>/dev/null || true"
+      run "ufw --force delete allow ssh 2>/dev/null || true"
+
       if [[ -n "${ADMIN_SSH_ALLOW_FROM:-}" ]]; then
         run "ufw allow from ${ADMIN_SSH_ALLOW_FROM} to any port 22 proto tcp comment 'Admin SSH only'"
         log "UFW: SSH allowed from ${ADMIN_SSH_ALLOW_FROM} only"
@@ -687,9 +718,7 @@ harden_ufw_iptables() {
         restart_service_if_exists "ssh"
         log "sshd bound to localhost; no UFW rule added for port 22"
       else
-        warn "ALLOW_SSH=1 but ADMIN_SSH_ALLOW_FROM is not set and ADMIN_SSH_BIND_LOCAL!=1."
-        warn "To avoid exposing SSH globally the script will NOT add a global ufw allow 22/tcp rule."
-        warn "Set ADMIN_SSH_ALLOW_FROM='<your-ip>' to allow admin access, or set ADMIN_SSH_BIND_LOCAL=1 to bind sshd to localhost."
+        log "No ADMIN_SSH_ALLOW_FROM set: ensuring SSH is not allowed from Anywhere"
       fi
     fi
   fi
