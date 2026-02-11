@@ -202,6 +202,29 @@ EOF
   run "systemctl daemon-reload 2>/dev/null || true"
   run "systemctl enable endlessh 2>/dev/null || true"
   run "systemctl restart endlessh 2>/dev/null || true"
+
+  # If the package doesn't provide a working unit that binds to our port,
+  # create a minimal systemd unit that invokes the endlessh binary with the
+  # configured port. This ensures it listens on $HONEYPOT_SSH_PORT.
+  if ! systemctl list-unit-files | grep -qE "^endlessh\.service"; then
+    log "Creating fallback systemd unit for endlessh to ensure binding to $HONEYPOT_SSH_PORT"
+    cat > /etc/systemd/system/endlessh.service <<EOF
+[Unit]
+Description=Endless SSH tarpit
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/sh -c '/usr/bin/env endlessh -p $HONEYPOT_SSH_PORT'
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    run "systemctl daemon-reload 2>/dev/null || true"
+    run "systemctl enable --now endlessh 2>/dev/null || true"
+  fi
 }
 
 create_fake_web_pages() {
