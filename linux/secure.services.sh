@@ -941,6 +941,9 @@ main() {
     add_anti_recon_measures
     add_fail2ban_scanner_rules
   fi
+  
+  # Setup honeypot defensive measures
+  if [[ "$ENABLE_HONEYPOT" == "1" ]]; then
     log "=========================================="
     log "Setting up honeypot defensive measures..."
     log "=========================================="
