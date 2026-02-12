@@ -1,4 +1,4 @@
-function LandOnTat() {
+function LandOnTatooine() {
         try {
             # Enable Windows Firewall for all profiles
             Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled true
@@ -6,11 +6,11 @@ function LandOnTat() {
             # Set default inbound policy to Block
             Set-NetFirewallProfile -Profile Domain,Public,Private -DefaultInboundAction Block -DefaultOutboundAction Allow
 
-            # Enable logging for dropped packets
+            # Enable logging for all packets
             Set-NetFirewallProfile -Profile Domain,Public,Private -LogAllowed true -LogBlocked true
 
             # Disallow Configuration Changes
-            Set=NetFirewallProfile -Profile Domain,Public,Private -AllowLocalPolicyMerge false -AllowLocalIPsecPolicyMerge false -AllowLocalFirewallRules false -AllowLocalIPsecRules false
+            Set-NetFirewallProfile -Profile Domain,Public,Private -AllowLocalPolicyMerge false -AllowLocalIPsecPolicyMerge false -AllowLocalFirewallRules false -AllowLocalIPsecRules false
 
             Write-Host "No Errors in 1st Stage, Continue" 
         }
@@ -34,8 +34,14 @@ function LandOnTat() {
            Write-Host "2nd Stage Failed"
         }
         try{
-           # Allow Communication with AD / DNS Server
+           # Allow Communication with Fellow Windows Machines
            New-NetFirewallRule -DisplayName "Allow DNS" -Direction Inbound -Protocol UDP -LocalPort 53 -Action Allow -Profile Domain,Public,Private -Enabled true
+           New-NetFirewallRule -DisplayName "Allow DHCP" -Direction Inbound -Protocol UDP -LocalPort 67,68 -Action Allow -Profile Domain,Public,Private -Enabled true
+           New-NetFirewallRule -DisplayName "Allow Kerberos" -Direction Inbound -Protocol TCP,UDP -LocalPort 88 -Action Allow -Profile Domain -Enabled true
+           
+           # Block SMB Traffic
+           New-NetFirewallRule -DisplayName 'Block SMB Inbound' -Direction Inbound -Protocol TCP -LocalPort 445 -Action Block -Profile Domain,Public,Private -Enabled true
+
         }
         catch {
             Write-Host "3rd Stage Failed"
@@ -43,5 +49,5 @@ function LandOnTat() {
     }
 
 
-LandOnTat
+LandOnTatooine
 
