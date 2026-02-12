@@ -16,8 +16,8 @@ LinuxServers:
       ansible_become_password: changeme
     splunk:
       vars:
-        ansible_host: 172.20.242.30
-      public: 
+        public:
+      ansible_host: 172.20.242.30
       ansible_user: sysadmin
       ansible_password: changeme
       ansible_become_password: changeme
