@@ -30,3 +30,5 @@ try {
 catch {
     Write-Host "OU Win19Server already exists, moving on"
 }
+
+& 'C:\Security Baseline\ToImport\Scripts\Baseline-ADImport.ps1'
