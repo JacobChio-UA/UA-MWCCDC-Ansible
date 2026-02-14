@@ -4,8 +4,8 @@ Dir=("/mnt/backup")
 SYD=("/etc/sysconfig")
 DOV=("/etc/dovecot")
 #making a the directory and doing the stuff ig
-if [ ! -d "$dir" ]; then    
-    mkdir -p "$dir"
+if [ ! -d "$Dir" ]; then    
+    mkdir -p "$Dir"
 fi
 cp -r "$SDP" "$DDP"
 cp -r "$syd" "/mnt/backup/sysconfigB"
