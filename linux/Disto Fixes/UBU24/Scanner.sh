@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Less strict error handling to prevent exits on counter operations
-set -u
+# Proper error handling
+set -uo pipefail
 
 ###############################################################################
 # PHP Webshell & File Integrity Scanner - Ubuntu Server 24 LTS
@@ -158,12 +158,23 @@ verify_ubuntu_24() {
 initialize_hash_db() {
     if [[ ! -f "$HASH_DB" ]]; then
         log_info "Initializing file integrity database..."
-        touch "$HASH_DB"
-        chmod 600 "$HASH_DB"  # Protect hash database
+        touch "$HASH_DB" 2>/dev/null || {
+            log_error "Cannot create hash database at $HASH_DB"
+            HASH_DB="/tmp/.filehash_db_$$.txt"
+            log_warn "Using temporary database: $HASH_DB"
+            touch "$HASH_DB" 2>/dev/null || return 1
+        }
+        chmod 600 "$HASH_DB" 2>/dev/null || true
         log_success "Hash database created at $HASH_DB"
     else
         log_info "Using existing hash database: $HASH_DB"
+        # Validate database is writable
+        if ! touch "$HASH_DB" 2>/dev/null; then
+            log_error "Hash database is not writable: $HASH_DB"
+            return 1
+        fi
     fi
+    return 0
 }
 
 ###############################################################################
@@ -171,8 +182,10 @@ initialize_hash_db() {
 ###############################################################################
 calculate_hash() {
     local file="$1"
-    if [[ -f "$file" ]]; then
-        sha256sum "$file" 2>/dev/null | awk '{print $1}'
+    if [[ -f "$file" && -r "$file" ]]; then
+        sha256sum "$file" 2>/dev/null | awk '{print $1}' || echo ""
+    else
+        echo ""
     fi
 }
 
@@ -183,11 +196,27 @@ update_hash() {
     local file="$1"
     local hash="$2"
     
-    # Remove old entry if exists
-    sed -i "\|^${file}|d" "$HASH_DB" 2>/dev/null || true
+    # Skip if hash is empty
+    [[ -z "$hash" ]] && return 0
+    
+    # Create temp file for safe update
+    local temp_db="${HASH_DB}.tmp.$$"
+    
+    # Remove old entry if exists, create new database
+    if [[ -f "$HASH_DB" ]]; then
+        grep -v -F "${file}|" "$HASH_DB" 2>/dev/null > "$temp_db" || touch "$temp_db"
+    else
+        touch "$temp_db"
+    fi
     
     # Add new entry
-    echo "${file}|${hash}|$(date +%s)" >> "$HASH_DB"
+    echo "${file}|${hash}|$(date +%s)" >> "$temp_db"
+    
+    # Replace old database
+    mv "$temp_db" "$HASH_DB" 2>/dev/null || true
+    chmod 600 "$HASH_DB" 2>/dev/null || true
+    
+    return 0
 }
 
 ###############################################################################
@@ -195,7 +224,16 @@ update_hash() {
 ###############################################################################
 get_stored_hash() {
     local file="$1"
-    grep "^${file}|" "$HASH_DB" 2>/dev/null | cut -d'|' -f2 || echo ""
+    
+    if [[ ! -f "$HASH_DB" ]]; then
+        echo ""
+        return 0
+    fi
+    
+    # Use grep with -F for literal string match (no regex)
+    local result=$(grep -F "${file}|" "$HASH_DB" 2>/dev/null | head -1 | cut -d'|' -f2 || echo "")
+    echo "$result"
+    return 0
 }
 
 ###############################################################################
