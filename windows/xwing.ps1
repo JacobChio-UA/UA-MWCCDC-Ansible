@@ -35,35 +35,35 @@ catch {
 $root = (Get-ADRootDSE).defaultNamingContext
 
 try{
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - Computer" | new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root"
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - User" | new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root"
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - Defender Antivirus" | new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root"
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - Credential Guard" | new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root"
+    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - Computer" | new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root" -ID $_.id
+    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - User" | new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root" -ID $_.id
+    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - Defender Antivirus" | new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root" -ID $_.id
+    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - Credential Guard" | new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root" -ID $_.id
 }
 catch {
     Write-Host "GPO for Windows 11 already exists, moving on"
 }
 try{
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2022 - Member Server" | new-gplink -name "Win22Server" -target "OU=Win22Server,$root"
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2022 - Defender Antivirus" | new-gplink -name "Win22Server" -target "OU=Win22Server,$root"
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2022 - Member Server Credential Guard" | new-gplink -name "Win22Server" -target "OU=Win22Server,$root"
+    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2022 - Member Server" | new-gplink -name "Win22Server" -target "OU=Win22Server,$root" -ID $_.id
+    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2022 - Defender Antivirus" | new-gplink -name "Win22Server" -target "OU=Win22Server,$root" -ID $_.id
+    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2022 - Member Server Credential Guard" | new-gplink -name "Win22Server" -target "OU=Win22Server,$root" -ID $_.id
 }
 catch {
     Write-Host "GPO for Windows Server 2022 already exists, moving on"
 }
 try{
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2019 - Member Server" | new-gplink -name "Win19Server" -target "OU=Win19Server,$root" 
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 - Defender Antivirus" | new-gplink -name "Win19Server" -target "OU=Win19Server,$root"
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 Member Server - Credential Guard" | new-gplink -name "Win19Server" -target "OU=Win19Server,$root"
+    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2019 - Member Server" | new-gplink -name "Win19Server" -target "OU=Win19Server,$root"  -ID $_.id
+    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 - Defender Antivirus" | new-gplink -name "Win19Server" -target "OU=Win19Server,$root" -ID $_.id
+    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 Member Server - Credential Guard" | new-gplink -name "Win19Server" -target "OU=Win19Server,$root" -ID $_.id
 }
 catch {
     Write-Host "GPO for Windows Server 2019 already exists, moving on"
 }
 try{
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 - Defender Antivirus" | new-gplink -name "Win19Server" -target "OU=Domain Controllers,$root"
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 - Domain Security" | new-gplink -name "Win19Server" -target "$root"
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2019 - Domain Controller" | new-gplink -name "Win19Server" -target "OU=Domain Controllers,$root"
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2019 - Domain Controller Virtualization Based Security" | new-gplink -name "Win19Server" -target "OU=Domain Controllers,$root"
+    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 - Defender Antivirus" | new-gplink -name "Win19DCServer" -target "OU=Domain Controllers,$root" -ID $_.id
+    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 - Domain Security" | new-gplink -name "Win19DCServer" -target "$root" -ID $_.id
+    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2019 - Domain Controller" | new-gplink -name "Win19DCServer" -target "OU=Domain Controllers,$root" -ID $_.id
+    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2019 - Domain Controller Virtualization Based Security" | new-gplink -name "Win19DCServer" -target "OU=Domain Controllers,$root" -ID $_.id
 }
 catch {
     Write-Host "GPO for Windows Server 2019 domain controller, moving on"
