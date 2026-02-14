@@ -8,7 +8,7 @@ Expand-Archive -Path 'Windows 11 v25H2 Security Baseline.zip' -DestinationPath '
 
 cd 'C:\Security Baseline\Windows 11 v25H2 Security Baseline\Scripts'
 .\Baseline-ADImport.ps1
-Copy-Item -Path 'C:\Security Baseline\Windows 11 v25H2 Security Baseline\Scripts\' -Destination 'C:\Security Baseline\WinServer2019\Scripts\' -Force -Recurse
+Copy-Item -Path 'C:\Security Baseline\Windows 11 v25H2 Security Baseline\Scripts\' -Destination 'C:\Security Baseline\WinServer2019\' -Force -Recurse
 cd 'C:\Security Baseline\WinServer2019\Scripts'
 .\Baseline-ADImport.ps1
 cd 'C:\Security Baseline\Windowns Server-2022-Security-Baseline-FINAL\Scripts'
