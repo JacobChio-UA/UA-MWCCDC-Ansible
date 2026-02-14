@@ -4,13 +4,11 @@
 set -e
 
 # ==========================================
-# Wazuh Agent Auto Installer for Oracle Linux 9
+# Wazuh Manager Installation for Oracle Linux 9
+# Central log collection and analysis server
 # ==========================================
 
-MANAGER_IP="${1:-10.0.0.5}"
-
-echo "[+] Starting Wazuh agent installation"
-echo "[+] Manager IP: $MANAGER_IP"
+echo "[+] Starting Wazuh Manager installation for Oracle Linux 9"
 
 # -------------------------
 # Robust Oracle Linux 9 check
@@ -30,7 +28,7 @@ if { [[ "$OS_ID" != ol ]] && [[ "$OS_ID" != oracle ]]; } || [[ "$OS_VERSION" != 
 	exit 1
 fi
 
-echo "[+] Oracle Linux 9 detected"
+echo "[+] Oracle Linux 9 detected - installing Wazuh Manager"
 
 # -------------------------
 # Update and install deps
@@ -60,33 +58,38 @@ REPO
 sudo dnf -y makecache
 
 # -------------------------
-# Install Wazuh agent
+# Install Wazuh Manager (NOT agent)
 # -------------------------
-echo "[+] Installing Wazuh agent"
-sudo dnf install -y wazuh-agent
+echo "[+] Installing Wazuh Manager"
+sudo dnf install -y wazuh-manager
 
 # -------------------------
-# Configure manager IP
+# Enable and start Wazuh Manager service
 # -------------------------
-if [ -f /var/ossec/etc/ossec.conf ]; then
-	echo "[+] Configuring manager IP"
-	sudo sed -i "s|<address>.*</address>|<address>$MANAGER_IP</address>|" /var/ossec/etc/ossec.conf
-else
-	echo "[!] ossec.conf not found at /var/ossec/etc/ossec.conf"
-fi
-
-# -------------------------
-# Enable and start service
-# -------------------------
-echo "[+] Enabling and starting wazuh-agent"
+echo "[+] Enabling and starting wazuh-manager"
 sudo systemctl daemon-reload
-sudo systemctl enable --now wazuh-agent
+sudo systemctl enable --now wazuh-manager
 
 # -------------------------
-# Verify
+# Verify Manager is running
 # -------------------------
-echo "[+] Checking service status"
-sudo systemctl status wazuh-agent --no-pager
+echo "[+] Checking Wazuh Manager service status"
+sudo systemctl status wazuh-manager --no-pager
 
-echo "[+] Wazuh agent installation complete on Oracle Linux 9"
+# -------------------------
+# Display manager info
+# -------------------------
+echo ""
+echo "[+] =========================================="
+echo "[+] Wazuh Manager Installation Complete"
+echo "[+] =========================================="
+echo "[+] Manager is listening on:"
+echo "[+]   - Agent connection port: 1514 (TCP)"
+echo "[+]   - Manager API port: 55000 (HTTPS)"
+echo "[+]"
+echo "[+] Next steps:"
+echo "[+] 1. Add firewall rules to allow agent connections (port 1514)"
+echo "[+] 2. Deploy Wazuh agents on other machines with this manager's IP"
+echo "[+] 3. Access Wazuh Dashboard for log analysis"
+echo "[+] =========================================="
 
