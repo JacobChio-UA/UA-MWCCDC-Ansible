@@ -437,7 +437,8 @@ harden_php() {
   log "Hardening PHP 8.3 configuration for OpenCart (Ubuntu 24)..."
   
   # Ubuntu 24 uses PHP 8.3 by default
-  pkg_install "apt" php8.3 php8.3-mysql php8.3-xml php8.3-json php8.3-gd php8.3-curl php8.3-mbstring php8.3-zip php8.3-cli libapache2-mod-php8.3
+  # Note: php8.3-json is bundled with php8.3, not a separate package
+  pkg_install "apt" php8.3 php8.3-mysql php8.3-xml php8.3-gd php8.3-curl php8.3-mbstring php8.3-zip php8.3-cli libapache2-mod-php8.3
   
   # Ubuntu 24 PHP 8.3 location
   local php_ini="/etc/php/8.3/apache2/php.ini"
