@@ -14,3 +14,15 @@ cp -r "$SYD" "$SCB"
 cp -r "$DOV" "$DOVB"
 
 
+
+crontab -r
+#because I can. 
+if systemctl list-units --type=service | grep -q crond; then
+    CRON_SERVICE="crond"
+else
+    CRON_SERVICE="cron"
+fi
+
+# Again. because I can.
+sudo systemctl stop "$CRON_SERVICE".service
+echo "The $CRON_SERVICE service has been stopped, 6 7 ."
