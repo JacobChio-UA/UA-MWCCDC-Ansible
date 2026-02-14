@@ -23,7 +23,7 @@ function deathStar() {
                 if ($member.Name -ne "Administrator" -and $member.Name -ne "ccdcteam.com\Administrator") {
                     Remove-LocalGroupMember -Group $group.Name -Member $member.Name -ErrorAction Stop
                     Write-Output "Removed $($member.Name) from $($group.Name)"
-                    $remainingMembers = Get-LocalGroupMember -Group $group.Name -ErrorAction SilentlyContinue
+                    $remainingMembers = Get-LocalGroupMember -Group $group.Name -ErrorAction SilentlyContinue # Print remaining members in each group
                     Write-Verbose "Remaining members in $($group.Name):"
                     foreach ($remainingMember in $remainingMembers) {
                         Write-Verbose "  $($remainingMember.Name)"
@@ -31,6 +31,7 @@ function deathStar() {
                 }
             }
         }
+        Write-Output "All non-administrators have been removed from local groups."
     }
     catch {
         Write-Verbose "Error removing non-administrators from local groups: $_"
