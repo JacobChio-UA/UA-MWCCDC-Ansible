@@ -37,7 +37,6 @@ function LandOnTatooine() {
                     New-NetFirewallRule -DisplayName "Allow SMB" -Direction Inbound -Protocol TCP -LocalPort 445 -Action Allow -Profile Domain,Public,Private -Enabled true -remoteAddress "172.21.240.0/24,172.25.20.0-172.25.40.255"
                     New-NetFirewallRule -DisplayName "Allow DNS TCP" -Direction Inbound -Protocol TCP -LocalPort 53 -Action Allow -Profile Domain,Public,Private -Enabled true
                     New-NetFirewallRule -DisplayName "Allow NTP" -Direction Inbound -Protocol UDP -LocalPort 123 -Action Allow -Profile Domain,Public,Private -Enabled true -remoteAddress "172.21.240.0/24,172.25.20.0-172.25.40.255"
-
                     New-NetFirewallRule -DisplayName "Block TCP OutofScope Inbound low" -Direction Inbound -Protocol TCP -RemotePort 1-52 -Action Block -Profile Domain,Public,Private -Enabled true -RemoteAddress "10.0.0.0/8,192.168.0.0/16,172.16.0.0-172.21.240.0,172.21.243.0-172.25.19.255,172.25.43.0-172.31.255.255"
                     New-NetFirewallRule -DisplayName "Block UDP OutofScope Inbound low" -Direction Inbound -Protocol UDP -RemotePort 1-52 -Action Block -Profile Domain,Public,Private -Enabled true -RemoteAddress "10.0.0.0/8,192.168.0.0/16,172.16.0.0-172.21.240.0,172.21.243.0-172.25.19.255,172.25.43.0-172.31.255.255"
                     New-NetFirewallRule -DisplayName "Block TCP OutofScope Inbound High" -Direction Inbound -Protocol TCP -RemotePort 54-65535 -Action Block -Profile Domain,Public,Private -Enabled true -RemoteAddress "10.0.0.0/8,192.168.0.0/16,172.16.0.0-172.21.240.0,172.21.243.0-172.25.19.255,172.25.43.0-172.31.255.255"
@@ -53,6 +52,8 @@ function LandOnTatooine() {
                     New-NetFirewallRule -DisplayName "Allow DNS TCP" -Direction Outbound -Protocol TCP -RemotePort 53 -Action Allow -Profile Domain,Public,Private -Enabled true
                     New-NetFirewallRule -DisplayName "Allow NTP" -Direction Outbound -Protocol UDP -RemotePort 123 -Action Allow -Profile Domain,Public,Private -Enabled true
                     New-NetFirewallRule -DisplayName "Allow HTTP" -Direction Outbound -Protocol TCP -RemotePort 80,443 -Action Allow -Profile Domain,Public,Private -Enabled true
+                    New-NetFirewallRule -DisplayName "Allow Wazuh" -Direction Outbound -Protocol TCP -RemotePort 1514-1516 -Action Allow -Profile Domain,Public,Private -Enabled true
+                    New-NetFirewallRule -DisplayName "Allow Wazuh" -Direction Outbound -Protocol UDP -RemotePort 1514-1516 -Action Allow -Profile Domain,Public,Private -Enabled true
                     New-NetFirewallRule -DisplayName "Block TCP OutofScope Outbound" -Direction Outbound -Protocol TCP -RemotePort 1-65535 -Action Block -Profile Domain,Public,Private -Enabled true -RemoteAddress "10.0.0.0/8,192.168.0.0/16,172.16.0.0-172.21.240.0,172.21.243.0-172.25.19.255,172.25.43.0-172.31.255.255"
                     New-NetFirewallRule -DisplayName "Block UDP OutofScope Outbound" -Direction Outbound -Protocol UDP -RemotePort 1-65535 -Action Block -Profile Domain,Public,Private -Enabled true -RemoteAddress "10.0.0.0/8,192.168.0.0/16,172.16.0.0-172.21.240.0,172.21.243.0-172.25.19.255,172.25.43.0-172.31.255.255"
                     Write-Host "No Errors in 3rd Stage, Continue"
