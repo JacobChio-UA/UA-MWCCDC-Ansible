@@ -36,48 +36,49 @@ $root = (Get-ADRootDSE).defaultNamingContext
 
 try{
     $gpo = get-gpo -Name "MSFT Windows 11 25H2 - Computer"
-    new-gplink -target "OU=Win11Workstation,$root" -ID $gpo.id
+    write-host $gpo
+    new-gplink -target "OU=Win11Workstation,$root" -ID $gpo.Id
     $gpo = get-gpo -Name "MSFT Windows 11 25H2 - User"
-    new-gplink -target "OU=Win11Workstation,$root" -ID $gpo.id
+    new-gplink -target "OU=Win11Workstation,$root" -Id $gpo.Id
     $gpo = get-gpo -Name "MSFT Windows 11 25H2 - Defender Antivirus"
-    new-gplink -target "OU=Win11Workstation,$root" -ID $gpo.id
+    new-gplink -target "OU=Win11Workstation,$root" -Id $gpo.Id
     $gpo = get-gpo -Name "MSFT Windows 11 25H2 - Credential Guard"
-    new-gplink -target "OU=Win11Workstation,$root" -ID $gpo.id
+    new-gplink -Target "OU=Win11Workstation,$root" -Id $gpo.Id
 }
 catch {
     Write-Host "GPO for Windows 11 already exists, moving on"
 }
 try{
     $gpo = get-gpo -Name "MSFT Windows Server 2022 - Member Server"
-    new-gplink -target "OU=Win22Server,$root" -ID $gpo.id
+    new-gplink -target "OU=Win22Server,$root" -Id $gpo.Id
     $gpo = get-gpo -Name "MSFT Windows Server 2022 - Defender Antivirus"
-    new-gplink -target "OU=Win22Server,$root" -ID $gpo.id
+    new-gplink -target "OU=Win22Server,$root" -Id $gpo.Id
     $gpo = get-gpo -Name "MSFT Windows Server 2022 - Member Server Credential Guard"
-    new-gplink -target "OU=Win22Server,$root" -ID $gpo.id
+    new-gplink -target "OU=Win22Server,$root" -Id $gpo.Id
 }
 catch {
     Write-Host "GPO for Windows Server 2022 already exists, moving on"
 }
 try{
     $gpo = get-gpo -Name "MSFT Windows Server 2019 - Member Server"
-    new-gplink -target "OU=Win19Server,$root"  -ID $gpo.id
+    new-gplink -target "OU=Win19Server,$root"  -Id $gpo.Id
     $gpo = get-gpo -Name "MSFT Windows 10 1809 and Server 2019 - Defender Antivirus"
-    new-gplink -target "OU=Win19Server,$root" -ID $gpo.id
+    new-gplink -target "OU=Win19Server,$root" -Id $gpo.Id
     $gpo = get-gpo -Name "MSFT Windows 10 1809 and Server 2019 Member Server - Credential Guard"
-    new-gplink -target "OU=Win19Server,$root" -ID $gpo.id
+    new-gplink -target "OU=Win19Server,$root" -Id $gpo.Id
 }
 catch {
     Write-Host "GPO for Windows Server 2019 already exists, moving on"
 }
 try{
     $gpo = get-gpo -Name "MSFT Windows 10 1809 and Server 2019 - Defender Antivirus"
-    new-gplink -target "OU=Domain Controllers,$root" -ID $gpo.id
+    new-gplink -target "OU=Domain Controllers,$root" -Id $gpo.Id
     $gpo = get-gpo -Name "MSFT Windows 10 1809 and Server 2019 - Domain Security"
-    new-gplink -target "$root" -ID $gpo.id
+    new-gplink -target "$root" -Id $gpo.Id
     $gpo = get-gpo -Name "MSFT Windows Server 2019 - Domain Controller"
-    new-gplink -target "OU=Domain Controllers,$root" -ID $gpo.id
+    new-gplink -target "OU=Domain Controllers,$root" -Id $gpo.Id
     $gpo = get-gpo -Name "MSFT Windows Server 2019 - Domain Controller Virtualization Based Security"
-    new-gplink -target "OU=Domain Controllers,$root" -ID $gpo.id
+    new-gplink -target "OU=Domain Controllers,$root" -Id $gpo.Id
 }
 catch {
     Write-Host "GPO for Windows Server 2019 domain controller, moving on"
