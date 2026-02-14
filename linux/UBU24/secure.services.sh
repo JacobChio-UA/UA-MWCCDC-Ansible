@@ -282,7 +282,7 @@ harden_ssh() {
 }
 
 harden_ufw_iptables() {
-  log "Configuring UFW firewall with iptables backend for Ubuntu..."
+  log "Applying UFW filter rules (without resetting existing UFW config)..."
   
   # First, disable and stop unnecessary network services
   log "Disabling unnecessary network services..."
@@ -310,19 +310,11 @@ harden_ufw_iptables() {
     fi
   fi
   
-  # Install required packages (one at a time for better error handling)
+  # Ensure UFW is installed
   log "Installing firewall packages..."
   pkg_install "apt" ufw
-  pkg_install "apt" iptables
-  
-  # Try to install iptables-persistent (optional, for rule persistence)
-  if [[ "$DRY_RUN" != "1" ]]; then
-    DEBIAN_FRONTEND=noninteractive apt-get install -y iptables-persistent 2>/dev/null || {
-      log "iptables-persistent not available, will use manual save method"
-    }
-  fi
-  
-  run "ufw --force reset"
+
+  # Keep secure UFW defaults without resetting existing rules
   run "ufw default deny incoming"
   run "ufw default allow outgoing"
   run "ufw default deny routed"
@@ -391,39 +383,7 @@ harden_ufw_iptables() {
   run "ufw logging medium"
   
   run "ufw --force enable"
-  log "UFW firewall enabled and configured"
-  
-  # Additional iptables rules for rate limiting (only for allowed services)
-  log "Configuring iptables rate limiting for allowed services..."
-  if [[ "$DRY_RUN" != "1" ]]; then
-    # Create iptables directory if it doesn't exist
-    mkdir -p /etc/iptables
-    
-    # Only add rate limiting for SSH if it's actually allowed from somewhere
-    if [[ -n "${ADMIN_SSH_ALLOW_FROM:-}" ]]; then
-      # Rate limit SSH connections to prevent brute force (from allowed IPs)
-      iptables -I INPUT -p tcp --dport 22 -m state --state NEW -m recent --set
-      iptables -I INPUT -p tcp --dport 22 -m state --state NEW -m recent --update --seconds 60 --hitcount 4 -j DROP
-      log "SSH rate limiting: max 4 connections per minute"
-    fi
-    
-    # Rate limit HTTP/HTTPS to prevent DoS
-    if [[ "$ALLOW_HTTP" == "1" ]]; then
-      iptables -I INPUT -p tcp --dport 80 -m state --state NEW -m recent --set
-      iptables -I INPUT -p tcp --dport 80 -m state --state NEW -m recent --update --seconds 1 --hitcount 50 -j DROP
-    fi
-    
-    if [[ "$ALLOW_HTTPS" == "1" ]]; then
-      iptables -I INPUT -p tcp --dport 443 -m state --state NEW -m recent --set
-      iptables -I INPUT -p tcp --dport 443 -m state --state NEW -m recent --update --seconds 1 --hitcount 50 -j DROP
-    fi
-    
-    # Save iptables rules
-    log "Saving iptables rules..."
-    iptables-save > /etc/iptables/rules.v4 2>/dev/null || true
-    netfilter-persistent save 2>/dev/null || true
-    log "iptables rules saved"
-  fi
+  log "UFW enabled and requested filters applied (existing rules preserved)"
 }
 
 harden_apache2() {
