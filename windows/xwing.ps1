@@ -4,8 +4,24 @@ curl.exe -o 'Windows 10 Version 1809 and Windows Server 2019 Security Baseline.z
 Expand-Archive -Path 'Windows 10 Version 1809 and Windows Server 2019 Security Baseline.zip' -DestinationPath 'C:\Security Baseline\WinServer2019\' -force
 curl.exe -o 'Windows 11 v25H2 Security Baseline.zip' 'https://download.microsoft.com/download/e99be2d2-e077-4986-a06b-6078051999dd/Windows%2011%20v25H2%20Security%20Baseline.zip'
 Expand-Archive -Path 'Windows 11 v25H2 Security Baseline.zip' -DestinationPath 'C:\Security Baseline\Win11\' -force
-curl.exe -o 'LGPO.zip' 'https://download.microsoft.com/download/8/5/c/85c25433-a1b0-4ffa-9429-7e023e7da8d8/LGPO.zip'
-Expand-Archive -Path 'LGPO.zip' -DestinationPath 'C:\Security Baseline' -force
+
+mkdir 'ToImport'
+
+$sourceFolder = (new-object -com shell.application).NameSpace("C:\Security Baseline\WinServer2019\")
+$destinationFolder = (new-object -com shell.application).NameSpace("C:\Security Baseline\ToImport\")
+$destinationFolder.MoveHere($sourceFolder,16)
+rm -Path 'C:\Security Baseline\WinServer2019\' -Recurse -Force
+
+$sourceFolder = (new-object -com shell.application).NameSpace("C:\Security Baseline\Windows Server-2022-Security-Baseline-FINAL\")
+$destinationFolder = (new-object -com shell.application).NameSpace("C:\Security Baseline\ToImport\")
+$destinationFolder.MoveHere($sourceFolder,16)
+rm -Path 'C:\Security Baseline\Windows Server-2022-Security-Baseline-FINAL\' -Recurse -Force
+
+$sourceFolder = (new-object -com shell.application).NameSpace("C:\Security Baseline\Win11\Windows 11 v25H2 Security Baseline\")
+$destinationFolder = (new-object -com shell.application).NameSpace("C:\Security Baseline\ToImport\")
+$destinationFolder.MoveHere($sourceFolder,16)
+rm -Path 'C:\Security Baseline\Win11\' -Recurse -Force
+
 try {
     new-adorganizationalunit -name "Win11Workstation"
 }
