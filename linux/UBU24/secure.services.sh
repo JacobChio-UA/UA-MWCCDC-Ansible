@@ -6,8 +6,30 @@ set -euo pipefail
 # - Focus: Ecommerce (OpenCart) security on Ubuntu 24 LTS Server
 # - Services: Apache2, MariaDB, Fail2Ban, ModSecurity
 #
+# FIREWALL RULES (UFW):
+#   ALLOWED (for NISE scoring):
+#     - HTTP (80/tcp), HTTPS (443/tcp) - Required for e-commerce scoring
+#   
+#   LOCALHOST ONLY:
+#     - MySQL (3306/tcp) - Database access restricted to localhost
+#   
+#   BLOCKED:
+#     - FTP (21/tcp) - Insecure file transfer
+#     - TFTP (69/udp), NTP server (123/udp)
+#     - SNMP (161/udp), SNMPTRAP (162/udp)
+#     - PTP (319-320/udp), ISAKMP/IPsec (500/udp, 4500/udp)
+#   
+#   SSH (22/tcp):
+#     - BLOCKED unless ADMIN_SSH_ALLOW_FROM is set to your IP
+#   
+#   All other ports: Blocked by default deny rule
+#
 # Usage:
 #   sudo bash secure_services.sh
+#   
+#   # To allow SSH from specific IP:
+#   ADMIN_SSH_ALLOW_FROM="192.168.1.100" sudo bash secure_services.sh
+#
 # Optional:
 #   DRY_RUN=1 sudo bash secure_services.sh
 ###############################################################################
@@ -16,18 +38,23 @@ set -euo pipefail
 : "${DRY_RUN:=0}"
 
 # Firewall openings
-: "${ALLOW_SSH:=1}"
-: "${ALLOW_HTTP:=1}"      # 80/tcp
-: "${ALLOW_HTTPS:=1}"     # 443/tcp
-: "${ALLOW_MYSQL:=0}"     # 3306/tcp local access only
+: "${ALLOW_SSH:=1}"       # If 1 and ADMIN_SSH_ALLOW_FROM set: allow SSH from specific IP only
+                          # If 1 and no ADMIN_SSH_ALLOW_FROM: SSH is BLOCKED externally
+                          # If 0: SSH explicitly denied
+: "${ALLOW_HTTP:=1}"      # 80/tcp - Required for web server
+: "${ALLOW_HTTPS:=1}"     # 443/tcp - Required for secure web server
+
+# MySQL is ALWAYS restricted to localhost only (127.0.0.1) for security
+# External MySQL access is explicitly blocked regardless of settings
 
 # SSH hardening (keep conservative to avoid lockouts)
 : "${SSH_DISABLE_ROOT_LOGIN:=1}"
 : "${SSH_PASSWORD_AUTH:=1}"  # set 0 to disable password auth (key-only) - can lock you out!
 
-# Admin SSH controls (safe defaults: do NOT open 22 globally)
+# Admin SSH controls (CRITICAL: Set this to your admin IP/CIDR to allow SSH)
+# Examples: "192.168.1.100" or "10.0.0.0/24" or leave empty to block SSH externally
 : "${ADMIN_SSH_ALLOW_FROM:=}"
-: "${ADMIN_SSH_BIND_LOCAL:=0}"
+: "${ADMIN_SSH_BIND_LOCAL:=0}"  # If 1: bind SSH to localhost only (no external access)
 
 
 
@@ -107,6 +134,17 @@ restart_service_if_exists() {
   local svc="$1"
   if systemctl list-unit-files | grep -qE "^${svc}\.service"; then
     run "systemctl restart ${svc} || true"
+  fi
+}
+
+disable_service() {
+  local svc="$1"
+  # systemctl mask prevents the service from being started
+  if systemctl list-unit-files | grep -q "^${svc}\.service"; then
+    run "systemctl stop ${svc} 2>/dev/null || true"
+    run "systemctl disable ${svc} 2>/dev/null || true"
+    run "systemctl mask ${svc} 2>/dev/null || true"
+    log "Service ${svc} stopped, disabled, and masked"
   fi
 }
 
@@ -235,8 +273,35 @@ harden_ssh() {
 harden_ufw_iptables() {
   log "Configuring UFW firewall with iptables backend for Ubuntu..."
   
-  pkg_install "apt" ufw iptables
+  # First, disable and stop unnecessary network services
+  log "Disabling unnecessary network services..."
+  disable_service "snmpd"
+  disable_service "snmptrapd" 
+  disable_service "tftpd-hpa"
+  disable_service "atftpd"
+  disable_service "isc-dhcp-server"
+  disable_service "isakmpd"
+  disable_service "racoon"
+  disable_service "strongswan"
+  disable_service "ptpd"
   
+  # Disable NTP server mode (keep NTP client for time sync)
+  if systemctl is-active --quiet ntp 2>/dev/null || systemctl is-active --quiet ntpd 2>/dev/null; then
+    log "Configuring NTP as client-only (not server)..."
+    if [[ -f /etc/ntp.conf ]]; then
+      backup_file "/etc/ntp.conf"
+      # Comment out any 'restrict' lines that allow external queries
+      sed -i 's/^restrict.*default.*$/# &/' /etc/ntp.conf
+      # Add restrictive default
+      echo "restrict default ignore" >> /etc/ntp.conf
+      echo "restrict 127.0.0.1" >> /etc/ntp.conf
+      systemctl restart ntp 2>/dev/null || systemctl restart ntpd 2>/dev/null || true
+    fi
+  fi
+  
+  pkg_install "apt" ufw iptables iptables-persistent
+  
+  run "ufw --force reset"
   run "ufw default deny incoming"
   run "ufw default allow outgoing"
   run "ufw default deny routed"
@@ -265,31 +330,78 @@ harden_ufw_iptables() {
         restart_service_if_exists "ssh"
         log "sshd bound to localhost; no UFW rule added for port 22"
       else
-        log "No ADMIN_SSH_ALLOW_FROM set: ensuring SSH is not allowed from Anywhere"
+        log "No ADMIN_SSH_ALLOW_FROM set: SSH is BLOCKED from all external sources"
+        run "ufw deny 22/tcp comment 'SSH explicitly blocked'"
       fi
     fi
+  else
+    log "ALLOW_SSH=0: Explicitly denying SSH"
+    run "ufw deny 22/tcp comment 'SSH disabled'"
   fi
+  
+  # Web services - required for e-commerce
   [[ "$ALLOW_HTTP" == "1" ]] && run "ufw allow 80/tcp comment 'HTTP'"
   [[ "$ALLOW_HTTPS" == "1" ]] && run "ufw allow 443/tcp comment 'HTTPS'"
   
-  # MySQL - restrict to localhost only
-  run "ufw allow from 127.0.0.1 to 127.0.0.1 port 3306 comment 'MariaDB local'"
+  # MySQL/MariaDB - LOCALHOST ONLY (critical for security)
+  log "Restricting MySQL to localhost only..."
+  run "ufw deny 3306/tcp comment 'MySQL blocked externally'"
+  run "ufw allow from 127.0.0.1 to 127.0.0.1 port 3306 proto tcp comment 'MySQL localhost only'"
   
-  run "ufw enable"
+  # Block FTP (commonly exploited)
+  log "Blocking FTP..."
+  run "ufw deny 21/tcp comment 'FTP blocked'"
   
-  # Additional iptables rules for connection limiting
-  log "Configuring iptables for connection limiting..."
+  # Block suspicious UDP services that showed up on nmap scan
+  log "Blocking suspicious UDP services..."
+  run "ufw deny 69/udp comment 'TFTP blocked'"
+  run "ufw deny 123/udp comment 'NTP server blocked'"
+  run "ufw deny 161/udp comment 'SNMP blocked'"
+  run "ufw deny 162/udp comment 'SNMPTRAP blocked'"
+  run "ufw deny 319/udp comment 'PTP-event blocked'"
+  run "ufw deny 320/udp comment 'PTP-general blocked'"
+  run "ufw deny 500/udp comment 'ISAKMP/IPsec blocked'"
+  run "ufw deny 4500/udp comment 'IPsec NAT-T blocked'"
+  
+  # Allow loopback
+  run "ufw allow from 127.0.0.1"
+  
+  # Enable logging
+  run "ufw logging medium"
+  
+  run "ufw --force enable"
+  log "UFW firewall enabled and configured"
+  
+  # Additional iptables rules for rate limiting (only for allowed services)
+  log "Configuring iptables rate limiting for allowed services..."
   if [[ "$DRY_RUN" != "1" ]]; then
-    # Limit new SSH connections to prevent brute force
-    iptables -A INPUT -p tcp --dport 22 -m limit --limit 5/min --limit-burst 10 -j ACCEPT
-    iptables -A INPUT -p tcp --dport 22 -j DROP
+    # Create iptables directory if it doesn't exist
+    mkdir -p /etc/iptables
     
-    # Limit HTTP/HTTPS to prevent flood attacks
-    iptables -A INPUT -p tcp --dport 80 -m limit --limit 25/sec --limit-burst 100 -j ACCEPT
-    iptables -A INPUT -p tcp --dport 443 -m limit --limit 25/sec --limit-burst 100 -j ACCEPT
+    # Only add rate limiting for SSH if it's actually allowed from somewhere
+    if [[ -n "${ADMIN_SSH_ALLOW_FROM:-}" ]]; then
+      # Rate limit SSH connections to prevent brute force (from allowed IPs)
+      iptables -I INPUT -p tcp --dport 22 -m state --state NEW -m recent --set
+      iptables -I INPUT -p tcp --dport 22 -m state --state NEW -m recent --update --seconds 60 --hitcount 4 -j DROP
+      log "SSH rate limiting: max 4 connections per minute"
+    fi
     
-    # Save rules
-    run "iptables-save > /etc/iptables/rules.v4"
+    # Rate limit HTTP/HTTPS to prevent DoS
+    if [[ "$ALLOW_HTTP" == "1" ]]; then
+      iptables -I INPUT -p tcp --dport 80 -m state --state NEW -m recent --set
+      iptables -I INPUT -p tcp --dport 80 -m state --state NEW -m recent --update --seconds 1 --hitcount 50 -j DROP
+    fi
+    
+    if [[ "$ALLOW_HTTPS" == "1" ]]; then
+      iptables -I INPUT -p tcp --dport 443 -m state --state NEW -m recent --set
+      iptables -I INPUT -p tcp --dport 443 -m state --state NEW -m recent --update --seconds 1 --hitcount 50 -j DROP
+    fi
+    
+    # Save iptables rules
+    log "Saving iptables rules..."
+    iptables-save > /etc/iptables/rules.v4 2>/dev/null || true
+    netfilter-persistent save 2>/dev/null || true
+    log "iptables rules saved"
   fi
 }
 
