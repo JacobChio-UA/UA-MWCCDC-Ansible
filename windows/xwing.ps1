@@ -20,13 +20,13 @@ catch {
     Write-Host "OU Win11Workstation already exists, moving on"
 }
 try {
-    new-adorganizationalunit
+    new-adorganizationalunit -name "Win22Server"
 }
 catch {
     Write-Host "OU Win22Server already exists, moving on"
 }
 try {
-    new-adorganizationalunit
+    new-adorganizationalunit -name "Win19Server"
 }
 catch {
     Write-Host "OU Win19Server already exists, moving on"
