@@ -10,3 +10,4 @@ fi
 cp -r "$SDP" "$DDP"
 cp -r "$syd" "/mnt/backup/sysconfigB"
 cp -r "$DOV" "/mnt/backup/dovecotB"
+
