@@ -69,7 +69,7 @@ if [ "$cron" == "y" ]; then
     fi
 else
     echo "didn't do anythin."
-
+fi
 echo "things im probably missing but cant care enough to add: "
 echo "groups"
 
