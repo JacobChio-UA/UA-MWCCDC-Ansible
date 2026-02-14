@@ -44,7 +44,6 @@ function LandOnTatooine() {
         try {
             # Allow Necessary Connections
             Enable-NetFirewallRule -DisplayGroup "Core Networking"
-            New-NetFirewallRule -DisplayName "Allow RPC" -Direction Outbound -Protocol TCP -RemotePort 135 -Action Allow -Profile Domain,Public,Private -Enabled true
             New-NetFirewallRule -DisplayName "Allow NTP" -Direction Outbound -Protocol UDP -RemotePort 123 -Action Allow -Profile Domain,Public,Private -Enabled true
             New-NetFirewallRule -DisplayName "Allow SMB" -Direction Outbound -Protocol TCP -RemotePort 445 -Action Allow -Profile Domain,Public,Private -Enabled true
             }
@@ -55,5 +54,5 @@ function LandOnTatooine() {
 
 
 
-LandOnTat
+LandOnTatooine
 
