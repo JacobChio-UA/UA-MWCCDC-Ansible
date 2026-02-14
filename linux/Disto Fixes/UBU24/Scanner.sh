@@ -1,6 +1,7 @@
 #!/bin/bash
 
-set -euo pipefail
+# Less strict error handling to prevent exits on counter operations
+set -u
 
 ###############################################################################
 # PHP Webshell & File Integrity Scanner - Ubuntu Server 24 LTS
@@ -206,11 +207,11 @@ scan_php_file() {
     local patterns_found=()
     
     # Check filename against known shells
-    local basename=$(basename "$file")
+    local basename=$(basename "$file" 2>/dev/null || echo "unknown")
     for shell_name in "${KNOWN_SHELL_NAMES[@]}"; do
         if [[ "$basename" == "$shell_name" ]]; then
             log_critical "KNOWN WEBSHELL FILENAME: $file"
-            ((SHELLS_FOUND++))
+            SHELLS_FOUND=$((SHELLS_FOUND + 1))
             suspicious=1
         fi
     done
@@ -226,7 +227,7 @@ scan_php_file() {
         
         # Additional checks for obfuscated code
         # Check for high entropy (indicator of encoding)
-        local entropy=$(cat "$file" | tr -cd '[:alnum:]' | fold -w1 | sort | uniq -c | awk '{print $1}' | sort -nr | head -1)
+        local entropy=$(cat "$file" 2>/dev/null | tr -cd '[:alnum:]' | fold -w1 | sort | uniq -c | awk '{print $1}' | sort -nr | head -1 || echo "0")
         if [[ $entropy -gt 1000 ]]; then
             # Highly repetitive characters - possible encoding
             if grep -qE "eval|base64|gzinflate|str_rot13" "$file" 2>/dev/null; then
@@ -236,7 +237,7 @@ scan_php_file() {
         fi
         
         # Check for single-line PHP files (common in shells)
-        local line_count=$(wc -l < "$file")
+        local line_count=$(wc -l < "$file" 2>/dev/null || echo "0")
         if [[ $line_count -eq 1 ]] && grep -qE "eval|system|exec|shell_exec|passthru" "$file" 2>/dev/null; then
             patterns_found+=("single-line-execution")
             suspicious=1
@@ -248,11 +249,11 @@ scan_php_file() {
             for found_pattern in "${patterns_found[@]}"; do
                 log_error "  → Pattern matched: $found_pattern"
             done
-            ((SHELLS_FOUND++))
+            SHELLS_FOUND=$((SHELLS_FOUND + 1))
         fi
     fi
     
-    return $suspicious
+    return 0
 }
 
 ###############################################################################
@@ -265,17 +266,21 @@ check_file_integrity() {
     
     if [[ -z "$stored_hash" ]]; then
         # New file - add to database
-        update_hash "$file" "$current_hash"
+        if [[ -n "$current_hash" ]]; then
+            update_hash "$file" "$current_hash"
+        fi
         log_warn "NEW FILE DETECTED: $file"
-        ((NEW_FILES++))
+        NEW_FILES=$((NEW_FILES + 1))
         return 1  # Indicate new file
     elif [[ "$current_hash" != "$stored_hash" ]]; then
         # File modified
         log_error "FILE MODIFIED: $file"
         log_error "  Old hash: $stored_hash"
         log_error "  New hash: $current_hash"
-        update_hash "$file" "$current_hash"
-        ((FILES_CHANGED++))
+        if [[ -n "$current_hash" ]]; then
+            update_hash "$file" "$current_hash"
+        fi
+        FILES_CHANGED=$((FILES_CHANGED + 1))
         return 2  # Indicate modification
     fi
     
@@ -289,7 +294,7 @@ scan_web_directory() {
     local dir="$1"
     
     if [[ ! -d "$dir" ]]; then
-        return
+        return 0
     fi
     
     log_info "Scanning directory: $dir"
@@ -297,35 +302,37 @@ scan_web_directory() {
     # Find all PHP files (exclude backup directories common patterns)
     while IFS= read -r -d '' php_file; do
         # Skip backup directories and common non-web paths
-        if echo "$php_file" | grep -qE "backup|\.bak|\.old|\.backup|/\.|node_modules|vendor/phpunit"; then
+        if echo "$php_file" | grep -qE "backup|\.bak|\.old|\.backup|/\.|node_modules|vendor/phpunit" 2>/dev/null; then
             continue
         fi
         
-        ((TOTAL_SCANNED++))
+        TOTAL_SCANNED=$((TOTAL_SCANNED + 1))
         
-        # Scan for webshells
-        scan_php_file "$php_file"
+        # Scan for webshells (don't exit on failure)
+        scan_php_file "$php_file" || true
         
-        # Check integrity
-        check_file_integrity "$php_file"
+        # Check integrity (don't exit on failure)
+        check_file_integrity "$php_file" || true
         
     done < <(find "$dir" -type f -name "*.php" -print0 2>/dev/null || true)
     
     # Also check for suspicious uploaded files
     while IFS= read -r -d '' suspect_file; do
-        if echo "$suspect_file" | grep -qE "backup|\.bak|\.old|\.backup|/\."; then
+        if echo "$suspect_file" | grep -qE "backup|\.bak|\.old|\.backup|/\." 2>/dev/null; then
             continue
         fi
         
-        ((TOTAL_SCANNED++))
+        TOTAL_SCANNED=$((TOTAL_SCANNED + 1))
         
         # Check if it's actually PHP despite extension
-        if file "$suspect_file" | grep -qE "PHP|ASCII.*script"; then
+        if file "$suspect_file" 2>/dev/null | grep -qE "PHP|ASCII.*script"; then
             log_warn "SUSPICIOUS: PHP-like file with wrong extension: $suspect_file"
-            scan_php_file "$suspect_file"
-            check_file_integrity "$suspect_file"
+            scan_php_file "$suspect_file" || true
+            check_file_integrity "$suspect_file" || true
         fi
     done < <(find "$dir" -type f \( -name "*.suspected" -o -name "*.txt.php" -o -name "*.jpg.php" -o -name "*.png.php" \) -print0 2>/dev/null || true)
+    
+    return 0
 }
 
 ###############################################################################
@@ -421,11 +428,13 @@ check_temp_uploads() {
                 # Look for recently created PHP files
                 find "$dir" -type f -name "*.php" -mtime -1 -print0 2>/dev/null | while IFS= read -r -d '' php_file; do
                     log_warn "Recent PHP file in temp location: $php_file"
-                    scan_php_file "$php_file"
+                    scan_php_file "$php_file" || true
                 done
             fi
         done
     done
+    
+    return 0
 }
 
 ###############################################################################
