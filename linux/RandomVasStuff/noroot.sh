@@ -20,7 +20,7 @@ else
   exit 1
 fi
 #verify user does not have sudo access 
-if sudo -lU "$user" >/dev/null 2>&1; then
+if id -nG "$user" | grep -qw wheel; then
   echo "User '$user' guess it didn't work still has sudo."
   exit 1
 else
