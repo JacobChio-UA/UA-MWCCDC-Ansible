@@ -330,12 +330,22 @@ check_file_integrity() {
 ###############################################################################
 scan_web_directory() {
     local dir="$1"
+    local file_count=0
     
     if [[ ! -d "$dir" ]]; then
+        log_warn "Directory does not exist: $dir"
+        return 0
+    fi
+    
+    if [[ ! -r "$dir" ]]; then
+        log_error "Directory not readable: $dir"
         return 0
     fi
     
     log_info "Scanning directory: $dir"
+    
+    # Temporarily disable pipefail for the find loops
+    set +o pipefail
     
     # Find all PHP files (exclude backup directories common patterns)
     while IFS= read -r -d '' php_file; do
@@ -345,6 +355,7 @@ scan_web_directory() {
         fi
         
         TOTAL_SCANNED=$((TOTAL_SCANNED + 1))
+        file_count=$((file_count + 1))
         
         # Scan for webshells (don't exit on failure)
         scan_php_file "$php_file" || true
@@ -361,6 +372,7 @@ scan_web_directory() {
         fi
         
         TOTAL_SCANNED=$((TOTAL_SCANNED + 1))
+        file_count=$((file_count + 1))
         
         # Check if it's actually PHP despite extension
         if file "$suspect_file" 2>/dev/null | grep -qE "PHP|ASCII.*script"; then
@@ -370,6 +382,10 @@ scan_web_directory() {
         fi
     done < <(find "$dir" -type f \( -name "*.suspected" -o -name "*.txt.php" -o -name "*.jpg.php" -o -name "*.png.php" \) -print0 2>/dev/null || true)
     
+    # Re-enable pipefail
+    set -o pipefail
+    
+    log_info "  → Scanned $file_count files in $dir"
     return 0
 }
 
@@ -389,10 +405,27 @@ run_single_scan() {
     
     # Scan each web directory
     for web_dir in "${WEB_DIRS[@]}"; do
-        # Handle glob patterns
-        for dir in $web_dir; do
+        # Handle glob patterns - disable pipefail temporarily for glob expansion
+        set +o pipefail
+        shopt -s nullglob 2>/dev/null || true
+        local expanded_dirs=($web_dir)
+        shopt -u nullglob 2>/dev/null || true
+        set -o pipefail
+        
+        # If no matches, try the literal path
+        if [[ ${#expanded_dirs[@]} -eq 0 ]]; then
+            expanded_dirs=("$web_dir")
+        fi
+        
+        for dir in "${expanded_dirs[@]}"; do
             if [[ -d "$dir" ]]; then
-                scan_web_directory "$dir"
+                log_info "Checking directory: $dir"
+                scan_web_directory "$dir" || {
+                    log_warn "Failed to fully scan $dir - continuing with next directory"
+                    continue
+                }
+            else
+                log_info "Skipping non-existent directory: $dir"
             fi
         done
     done
@@ -497,7 +530,10 @@ initialize_baseline() {
     log_info "Initializing baseline - establishing file hashes..."
     log_warn "This may take a while depending on the number of files..."
     
-    initialize_hash_db
+    initialize_hash_db || {
+        log_error "Failed to initialize hash database"
+        return 1
+    }
     
     # First pass - just record hashes without alerting
     local baseline_count=0
@@ -505,30 +541,49 @@ initialize_baseline() {
     echo "0" > "$temp_count_file"
     
     for web_dir in "${WEB_DIRS[@]}"; do
-        for dir in $web_dir; do
+        # Handle glob patterns
+        set +o pipefail
+        shopt -s nullglob 2>/dev/null || true
+        local expanded_dirs=($web_dir)
+        shopt -u nullglob 2>/dev/null || true
+        set -o pipefail
+        
+        # If no matches, try the literal path
+        if [[ ${#expanded_dirs[@]} -eq 0 ]]; then
+            expanded_dirs=("$web_dir")
+        fi
+        
+        for dir in "${expanded_dirs[@]}"; do
             if [[ -d "$dir" ]]; then
                 log_info "Processing: $dir"
+                
+                # Disable pipefail for find operation
+                set +o pipefail
                 while IFS= read -r -d '' php_file; do
-                    if echo "$php_file" | grep -qE "backup|\.bak|\.old|\.backup|/\."; then
+                    if echo "$php_file" | grep -qE "backup|\.bak|\.old|\.backup|/\." 2>/dev/null; then
                         continue
                     fi
                     local hash=$(calculate_hash "$php_file")
                     if [[ -n "$hash" ]]; then
-                        update_hash "$php_file" "$hash"
-                        local count=$(cat "$temp_count_file")
+                        update_hash "$php_file" "$hash" || true
+                        local count=$(cat "$temp_count_file" 2>/dev/null || echo "0")
                         echo $((count + 1)) > "$temp_count_file"
                     fi
                 done < <(find "$dir" -type f -name "*.php" -print0 2>/dev/null || true)
+                set -o pipefail
+            else
+                log_info "Skipping non-existent: $dir"
             fi
         done
     done
     
-    baseline_count=$(cat "$temp_count_file")
+    baseline_count=$(cat "$temp_count_file" 2>/dev/null || echo "0")
     rm -f "$temp_count_file"
     
     log_success "Baseline established for $baseline_count files"
     log_info "Hash database: $HASH_DB"
     log_info "You can now run continuous monitoring with: $0 --monitor"
+    return 0
 }
 
 ###############################################################################
