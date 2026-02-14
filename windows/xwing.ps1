@@ -375,7 +375,7 @@ Start-LoggedJob -JobName "Disable PowerShell Remoting" -ScriptBlock {
     try {
         # Disable PSRemoting
         Disable-PSRemoting -Force
-
+        powershell --Script "Disable-PSRemoting -Force"
         # Delete the listener that accepts requests on any IP address
         winrm delete winrm/config/Listener?Address=*+Transport=HTTP
         winrm delete winrm/config/Listener?Address=*+Transport=HTTPS
@@ -458,7 +458,7 @@ Start-LoggedJob -JobName "Upgrade SMB" -ScriptBlock {
 start-loggedjob -JobName "Backup DNS Zones" -ScriptBlock {
     try{
         get-dnsserverzone | ForEach-Object{
-            Export-DnsServerZone -Name $_.ZoneName -FileName "C:\users\Administrator\desktop\$($_.ZoneName).dns"
+            Export-DnsServerZone -Name $_.ZoneName -FileName "C:\users\Administrator\desktop\dns$($_.ZoneName).dns"
         }
         Write-Host "--------------------------------------------------------------------------------"
         Write-Host "DNS is backupped."
