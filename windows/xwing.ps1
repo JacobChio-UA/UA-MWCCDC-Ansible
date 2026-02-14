@@ -35,48 +35,48 @@ catch {
 $root = (Get-ADRootDSE).defaultNamingContext
 
 try{
-    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - Computer"
+    $gpo = get-gpo -Name "MSFT Windows 11 25H2 - Computer"
     new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root" -ID $gpo.id
-    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - User"
+    $gpo = get-gpo -Name "MSFT Windows 11 25H2 - User"
     new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root" -ID $gpo.id
-    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - Defender Antivirus"
+    $gpo = get-gpo -Name "MSFT Windows 11 25H2 - Defender Antivirus"
     new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root" -ID $gpo.id
-    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - Credential Guard"
+    $gpo = get-gpo -Name "MSFT Windows 11 25H2 - Credential Guard"
     new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root" -ID $gpo.id
 }
 catch {
     Write-Host "GPO for Windows 11 already exists, moving on"
 }
 try{
-    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2022 - Member Server"
+    $gpo = get-gpo -Name "MSFT Windows Server 2022 - Member Server"
     new-gplink -name "Win22Server" -target "OU=Win22Server,$root" -ID $gpo.id
-    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2022 - Defender Antivirus"
+    $gpo = get-gpo -Name "MSFT Windows Server 2022 - Defender Antivirus"
     new-gplink -name "Win22Server" -target "OU=Win22Server,$root" -ID $gpo.id
-    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2022 - Member Server Credential Guard"
+    $gpo = get-gpo -Name "MSFT Windows Server 2022 - Member Server Credential Guard"
     new-gplink -name "Win22Server" -target "OU=Win22Server,$root" -ID $gpo.id
 }
 catch {
     Write-Host "GPO for Windows Server 2022 already exists, moving on"
 }
 try{
-    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2019 - Member Server"
+    $gpo = get-gpo -Name "MSFT Windows Server 2019 - Member Server"
     new-gplink -name "Win19Server" -target "OU=Win19Server,$root"  -ID $gpo.id
-    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 - Defender Antivirus"
+    $gpo = get-gpo -Name "MSFT Windows 10 1809 and Server 2019 - Defender Antivirus"
     new-gplink -name "Win19Server" -target "OU=Win19Server,$root" -ID $gpo.id
-    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 Member Server - Credential Guard"
+    $gpo = get-gpo -Name "MSFT Windows 10 1809 and Server 2019 Member Server - Credential Guard"
     new-gplink -name "Win19Server" -target "OU=Win19Server,$root" -ID $gpo.id
 }
 catch {
     Write-Host "GPO for Windows Server 2019 already exists, moving on"
 }
 try{
-    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 - Defender Antivirus"
+    $gpo = get-gpo -Name "MSFT Windows 10 1809 and Server 2019 - Defender Antivirus"
     new-gplink -name "Win19DCServer" -target "OU=Domain Controllers,$root" -ID $gpo.id
-    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 - Domain Security"
+    $gpo = get-gpo -Name "MSFT Windows 10 1809 and Server 2019 - Domain Security"
     new-gplink -name "Win19DCServer" -target "$root" -ID $gpo.id
-    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2019 - Domain Controller"
+    $gpo = get-gpo -Name "MSFT Windows Server 2019 - Domain Controller"
     new-gplink -name "Win19DCServer" -target "OU=Domain Controllers,$root" -ID $gpo.id
-    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2019 - Domain Controller Virtualization Based Security"
+    $gpo = get-gpo -Name "MSFT Windows Server 2019 - Domain Controller Virtualization Based Security"
     new-gplink -name "Win19DCServer" -target "OU=Domain Controllers,$root" -ID $gpo.id
 }
 catch {
