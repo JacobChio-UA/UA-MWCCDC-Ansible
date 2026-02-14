@@ -7,20 +7,17 @@ Expand-Archive -Path 'Windows 11 v25H2 Security Baseline.zip' -DestinationPath '
 
 New-Item -Path "C:\Security Baseline\ToImport" -ItemType Directory -Force
 
-$sourceFolder = (new-object -com shell.application).NameSpace("C:\Security Baseline\WinServer2019")
-$destinationFolder = (new-object -com shell.application).NameSpace("C:\Security Baseline\ToImport")
-$destinationFolder.MoveHere($sourceFolder,16)
-#rm -Path 'C:\Security Baseline\WinServer2019\' -Recurse -Force
+(Get-ChildItem 'C:\Security Baseline\Windows 11 v25h2 Security Baseline\*' -Directory).FullName |
+     ForEach-Object { Join-Path $_ '*' } |
+         Copy-Item -Destination 'C:\Security Baseline\ToImport\' -Recurse
+         
+(Get-ChildItem 'C:\Security Baseline\WinServer2019\*' -Directory).FullName |
+     ForEach-Object { Join-Path $_ '*' } |
+         Copy-Item -Destination 'C:\Security Baseline\ToImport\' -Recurse
 
-$sourceFolder = (new-object -com shell.application).NameSpace("C:\Security Baseline\Windows Server-2022-Security-Baseline-FINAL")
-$destinationFolder = (new-object -com shell.application).NameSpace("C:\Security Baseline\ToImport")
-$destinationFolder.MoveHere($sourceFolder,16)
-rm -Path 'C:\Security Baseline\Windows Server-2022-Security-Baseline-FINAL\' -Recurse -Force
-
-$sourceFolder = (new-object -com shell.application).NameSpace("C:\Security Baseline\Win11\Windows 11 v25H2 Security Baseline")
-$destinationFolder = (new-object -com shell.application).NameSpace("C:\Security Baseline\ToImport")
-$destinationFolder.MoveHere($sourceFolder,16)
-rm -Path 'C:\Security Baseline\Win11\' -Recurse -Force
+(Get-ChildItem 'C:\Security Baseline\Windows Server-2022-Security-Baseline-Final\*' -Directory).FullName |
+     ForEach-Object { Join-Path $_ '*' } |
+         Copy-Item -Destination 'C:\Security Baseline\ToImport\' -Recurse
 
 try {
     new-adorganizationalunit -name "Win11Workstation"
