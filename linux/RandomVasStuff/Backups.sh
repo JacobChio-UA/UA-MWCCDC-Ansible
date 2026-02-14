@@ -10,6 +10,6 @@ if [ ! -d "$Dir" ]; then
     mkdir -p "$Dir"
 fi
 cp -r "$SDP" "$DDP"
-cp -r "$syd" "$SCB"
+cp -r "$SYD" "$SCB"
 cp -r "$DOV" "$DOVB"
 
