@@ -10,4 +10,4 @@ winget.exe install Microsoft.PowerShell -e --accept-source-agreements --accept-p
 winget.exe install Microsoft.VisualStudioCode -e --accept-source-agreements --accept-package-agreements
 winget.exe install Microsoft.WindowsTerminal -e --accept-source-agreements --accept-package-agreements
 winget.exe install Microsoft.etl2pcapng -e --accept-source-agreements --accept-package-agreements
-winget.exe install Git.Git -e --accept-source-agreements --accept-package-agreementsget-comm
+winget.exe install Git.Git -e --accept-source-agreements --accept-package-agreements
