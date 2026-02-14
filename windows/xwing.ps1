@@ -14,7 +14,22 @@ curl.exe -o 'LGPO.zip' 'https://download.microsoft.com/download/8/5/c/85c25433-a
 Expand-Archive -Path 'LGPO.zip' -DestinationPath 'C:\Security Baseline' -force
 mv 'C:\Security Baseline\LGPO' 'C:\Security Baseline\' -Force
 
-new-adorganizationalunit -name "Win11Workstation"
-new-adorganizationalunit -name "Win22Server"
-new-adorganizationalunit -name "Win19Server"
-
+& 'C:\Security Baseline\LGPO_30\LGPO.exe'
+try {
+    new-adorganizationalunit -name "Win11Workstation"
+}
+catch {
+    Write-Host "OU Win11Workstation already exists, moving on"
+}
+try {
+    new-adorganizationalunit -name "Win22Server"
+}
+catch {
+    Write-Host "OU Win22Server already exists, moving on"
+}
+try {
+    new-adorganizationalunit -name "Win19Server"
+}
+catch {
+    Write-Host "OU Win19Server already exists, moving on"
+}
