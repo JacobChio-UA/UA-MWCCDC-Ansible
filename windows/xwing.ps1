@@ -9,15 +9,15 @@ New-Item -Path "C:\Security Baseline\ToImport" -ItemType Directory -Force
 
 (Get-ChildItem 'C:\Security Baseline\Windows 11 v25h2 Security Baseline\*' -Directory).FullName |
      ForEach-Object { Join-Path $_ '*' } |
-         Copy-Item -Destination 'C:\Security Baseline\ToImport\' -Recurse
-         
+         Copy-Item -Destination 'C:\Security Baseline\ToImport\' -Recurse -Force
+
 (Get-ChildItem 'C:\Security Baseline\WinServer2019\*' -Directory).FullName |
      ForEach-Object { Join-Path $_ '*' } |
-         Copy-Item -Destination 'C:\Security Baseline\ToImport\' -Recurse
+         Copy-Item -Destination 'C:\Security Baseline\ToImport\' -Recurse -Force
 
 (Get-ChildItem 'C:\Security Baseline\Windows Server-2022-Security-Baseline-Final\*' -Directory).FullName |
      ForEach-Object { Join-Path $_ '*' } |
-         Copy-Item -Destination 'C:\Security Baseline\ToImport\' -Recurse
+         Copy-Item -Destination 'C:\Security Baseline\ToImport\' -Recurse -Force
 
 try {
     new-adorganizationalunit -name "Win11Workstation"
