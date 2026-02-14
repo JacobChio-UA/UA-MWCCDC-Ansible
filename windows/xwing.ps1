@@ -8,10 +8,10 @@ Expand-Archive -Path 'Windows 11 v25H2 Security Baseline.zip' -DestinationPath '
 
 cd 'C:\Security Baseline\Windows 11 v25H2 Security Baseline\Scripts'
 .\Baseline-ADImport.ps1
-cd 'C:\Security Baseline\WinServer2019\Windows 10 Version 1809 and Windows Server 2019 Security Baseline\Scripts'
+cd 'C:\Security Baseline\WinServer2019\Scripts'
 .\Baseline-ADImport.ps1
-cd 'C:\Security Baseline\WinServer2022\Windows Server 2022 Security Baseline\Scripts'
-
+cd 'C:\Security Baseline\Windowns Server-2022-Security-Baseline-FINAL\Scripts'
+.\Baseline-ADImport.ps1
 try {
     new-adorganizationalunit -name "Win11Workstation"
 }
@@ -30,5 +30,3 @@ try {
 catch {
     Write-Host "OU Win19Server already exists, moving on"
 }
-
-& 'C:\Security Baseline\ToImport\Scripts\Baseline-ADImport.ps1'
