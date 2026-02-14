@@ -35,35 +35,49 @@ catch {
 $root = (Get-ADRootDSE).defaultNamingContext
 
 try{
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - Computer" | new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root" -ID $_.id
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - User" | new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root" -ID $_.id
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - Defender Antivirus" | new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root" -ID $_.id
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - Credential Guard" | new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root" -ID $_.id
+    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - Computer"
+    new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root" -ID $gpo.id
+    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - User"
+    new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root" -ID $gpo.id
+    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - Defender Antivirus"
+    new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root" -ID $gpo.id
+    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 11 25H2 - Credential Guard"
+    new-gplink -name "Win11Workstation" -target "OU=Win11Workstation,$root" -ID $gpo.id
 }
 catch {
     Write-Host "GPO for Windows 11 already exists, moving on"
 }
 try{
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2022 - Member Server" | new-gplink -name "Win22Server" -target "OU=Win22Server,$root" -ID $_.id
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2022 - Defender Antivirus" | new-gplink -name "Win22Server" -target "OU=Win22Server,$root" -ID $_.id
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2022 - Member Server Credential Guard" | new-gplink -name "Win22Server" -target "OU=Win22Server,$root" -ID $_.id
+    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2022 - Member Server"
+    new-gplink -name "Win22Server" -target "OU=Win22Server,$root" -ID $gpo.id
+    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2022 - Defender Antivirus"
+    new-gplink -name "Win22Server" -target "OU=Win22Server,$root" -ID $gpo.id
+    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2022 - Member Server Credential Guard"
+    new-gplink -name "Win22Server" -target "OU=Win22Server,$root" -ID $gpo.id
 }
 catch {
     Write-Host "GPO for Windows Server 2022 already exists, moving on"
 }
 try{
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2019 - Member Server" | new-gplink -name "Win19Server" -target "OU=Win19Server,$root"  -ID $_.id
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 - Defender Antivirus" | new-gplink -name "Win19Server" -target "OU=Win19Server,$root" -ID $_.id
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 Member Server - Credential Guard" | new-gplink -name "Win19Server" -target "OU=Win19Server,$root" -ID $_.id
+    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2019 - Member Server"
+    new-gplink -name "Win19Server" -target "OU=Win19Server,$root"  -ID $gpo.id
+    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 - Defender Antivirus"
+    new-gplink -name "Win19Server" -target "OU=Win19Server,$root" -ID $gpo.id
+    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 Member Server - Credential Guard"
+    new-gplink -name "Win19Server" -target "OU=Win19Server,$root" -ID $gpo.id
 }
 catch {
     Write-Host "GPO for Windows Server 2019 already exists, moving on"
 }
 try{
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 - Defender Antivirus" | new-gplink -name "Win19DCServer" -target "OU=Domain Controllers,$root" -ID $_.id
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 - Domain Security" | new-gplink -name "Win19DCServer" -target "$root" -ID $_.id
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2019 - Domain Controller" | new-gplink -name "Win19DCServer" -target "OU=Domain Controllers,$root" -ID $_.id
-    get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2019 - Domain Controller Virtualization Based Security" | new-gplink -name "Win19DCServer" -target "OU=Domain Controllers,$root" -ID $_.id
+    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 - Defender Antivirus"
+    new-gplink -name "Win19DCServer" -target "OU=Domain Controllers,$root" -ID $gpo.id
+    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows 10 1809 and Server 2019 - Domain Security"
+    new-gplink -name "Win19DCServer" -target "$root" -ID $gpo.id
+    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2019 - Domain Controller"
+    new-gplink -name "Win19DCServer" -target "OU=Domain Controllers,$root" -ID $gpo.id
+    $gpo = get-gpo -all | Where-Object -Property DisplayName -Match "MSFT Windows Server 2019 - Domain Controller Virtualization Based Security"
+    new-gplink -name "Win19DCServer" -target "OU=Domain Controllers,$root" -ID $gpo.id
 }
 catch {
     Write-Host "GPO for Windows Server 2019 domain controller, moving on"
@@ -458,7 +472,7 @@ Start-LoggedJob -JobName "Upgrade SMB" -ScriptBlock {
 start-loggedjob -JobName "Backup DNS Zones" -ScriptBlock {
     try{
 
-        Export-DnsServerZone -Name 'ccdcteam.com' -FileName "C:\users\Administrator\desktop\dns$($_.ZoneName).dns"
+        Export-DnsServerZone -Name 'ccdcteam.com' -FileName "C:\users\Administrator\desktop\dnsccdcteam.dns"
 
         Write-Host "--------------------------------------------------------------------------------"
         Write-Host "DNS is backupped."
@@ -475,7 +489,7 @@ while ($jobs.Count -gt 0) {
     foreach ($job in $jobs) {
         if ($job.State -eq 'Completed') {
             $job | Receive-Job
-            $jobs = $jobs | Where-Object { $_.Id -ne $job.Id }
+            $jobs = $jobs | Where-Object { $gpo.id -ne $job.Id }
         }
     }
     Start-Sleep -Seconds 5
