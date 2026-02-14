@@ -1,6 +1,6 @@
 # "It's a trap!" - Admiral Ackbar
 # we will try to rebuild windows defender, who knows maybe it will work, maybe not, but we will try
-$broken = $true
+$broken = $tr
 $defenderServices = Get-Service WinDefend, WdNisSvc, wdnisdrv
 
 foreach ($service in $defenderServices) {
@@ -32,12 +32,12 @@ if ($True -eq $broken) {
     write-host "Running the scanner, this may take a while, you may need to click through some prompts, just click yes to everything"
     Start-Process -FilePath "msert.exe" -Wait
     Start-Process -FilePath "msert.exe" -ArgumentList "/F:Y /Q"
-    start-process "cmd /c `"for /f `"delims=`" %d in ('dir `"%ProgramData%\Microsoft\Windows Defender\Platform`" /ad /b /o:-n') do if not defined _done `"%ProgramData%\Microsoft\Windows Defender\Platform\%d\MpCmdRun.exe`" -RemoveDefinitions -All" -Wait
+#    start-process "cmd /c `"for /f `"delims=`" %d in ('dir `"%ProgramData%\Microsoft\Windows Defender\Platform`" /ad /b /o:-n') do if not defined _done `"%ProgramData%\Microsoft\Windows Defender\Platform\%d\MpCmdRun.exe`" -RemoveDefinitions -All" -Wait
     New-Item -Path "C:\DefenderTemp" -ItemType Directory; Invoke-Command {reg export 'HKLM\SOFTWARE\Policies\Microsoft\Windows Defender' C:\DefenderTemp\_DefenderAVBackup.reg}
     try{DISM /Online /Cleanup-Image /RestoreHealth}
     catch{sfc /scannow}
     Remove-Item -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender' -Force
-    start-process "for /f `"delims=`" %d in ('dir `"%ProgramData%\Microsoft\Windows Defender\Platform`" /ad /b /o:-n') do if not defined _done `"%ProgramData%\Microsoft\Windows Defender\Platform\%d\MpCmdRun.exe`" -SignatureUpdate -MMPC"
+#    start-process "for /f `"delims=`" %d in ('dir `"%ProgramData%\Microsoft\Windows Defender\Platform`" /ad /b /o:-n') do if not defined _done `"%ProgramData%\Microsoft\Windows Defender\Platform\%d\MpCmdRun.exe`" -SignatureUpdate -MMPC"
     write-Host "Defender should be fixed now, if not we can try to just win with the super laser"
 }
 else {
