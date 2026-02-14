@@ -98,7 +98,7 @@ foreach ($path in $startupRegistryPaths) {
     if ($items) {
         $items.PSObject.Properties | ForEach-Object {
             if ($_.Name -ne "PSPath" -and $_.Name -ne "PSParentPath" -and $_.Name -ne "PSChildName" -and $_.Name -ne "PSDrive" -and $_.Name -ne "PSProvider") {
-                $items >> "C:\Users\Adminstrator\Desktop\persistence-registry.txt"
+                $items >> "C:\Users\administrator\Desktop\persistence-registry.txt"
                 Remove-ItemProperty -Path $path -Name $_.Name -ErrorAction SilentlyContinue
             }
         }
@@ -114,7 +114,7 @@ $startupFolders = @(
 foreach ($folder in $startupFolders) {
     Write-Host "Clearing startup items from $folder"
     Get-ChildItem -Path $folder | ForEach-Object {
-        $_.FullName >> "C:\Users\Adminstrator\Desktop\persistence-startup.txt"
+        $_.FullName >> "C:\Users\administrator\Desktop\persistence-startup.txt"
         Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue
     }
 }
@@ -122,7 +122,7 @@ foreach ($folder in $startupFolders) {
 # Clear scheduled tasks
 Write-Host "Clearing scheduled tasks..."
 Get-ScheduledTask | Where-Object { $_.TaskPath -notlike "\Microsoft\*" } | ForEach-Object {
-    $_.TaskName >> "C:\Users\Adminstrator\Desktop\persistence-schtasks.txt"
+    $_.TaskName >> "C:\Users\administrator\Desktop\persistence-schtasks.txt"
     Unregister-ScheduledTask -TaskName $_.TaskName -Confirm:$false
 }
 
@@ -458,14 +458,14 @@ Start-LoggedJob -JobName "Upgrade SMB" -ScriptBlock {
 start-loggedjob -JobName "Backup DNS Zones" -ScriptBlock {
     try{
         get-dnsserverzone | ForEach-Object{
-            Export-DnsServerZone -Name $_.ZoneName -FileName "$($_.ZoneName).dns"
+            Export-DnsServerZone -Name $_.ZoneName -FileName "C:\users\Administrator\desktop\$($_.ZoneName).dns"
         }
         Write-Host "--------------------------------------------------------------------------------"
         Write-Host "DNS is backupped."
         Write-Host "--------------------------------------------------------------------------------"
     } catch {
         Write-Host "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-        Write-Host "An error occurred while disabling SMBv1 client: $_"
+        Write-Host "An Error Occured with DNS $_"
         Write-Host "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
     }
 }
