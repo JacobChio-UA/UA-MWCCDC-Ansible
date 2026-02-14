@@ -4,13 +4,8 @@ curl.exe -o 'Windows 10 Version 1809 and Windows Server 2019 Security Baseline.z
 Expand-Archive -Path 'Windows 10 Version 1809 and Windows Server 2019 Security Baseline.zip' -DestinationPath 'C:\Security Baseline\WinServer2019\' -force
 curl.exe -o 'Windows 11 v25H2 Security Baseline.zip' 'https://download.microsoft.com/download/e99be2d2-e077-4986-a06b-6078051999dd/Windows%2011%20v25H2%20Security%20Baseline.zip'
 Expand-Archive -Path 'Windows 11 v25H2 Security Baseline.zip' -DestinationPath 'C:\Security Baseline\Win11\' -force
-
-New-Item -Path "C:\Security Baseline\ToImport" -ItemType Directory -Force
-
-#dialog to ask user to merge baselines
-start-process 'explorer.exe' -ArgumentList 'C:\Security Baseline\'
-Read-Host -Prompt "Press Enter once you have merged the baselines and are ready to import them into GPOs" | Out-Null
-
+curl.exe -o 'LGPO.zip' 'https://download.microsoft.com/download/8/5/c/85c25433-a1b0-4ffa-9429-7e023e7da8d8/LGPO.zip'
+Expand-Archive -Path 'LGPO.zip' -DestinationPath 'C:\Security Baseline\LGPO\' -force
 
 try {
     new-adorganizationalunit -name "Win11Workstation"
