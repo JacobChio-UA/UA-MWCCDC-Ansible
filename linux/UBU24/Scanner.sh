@@ -52,6 +52,7 @@ KNOWN_SHELL_NAMES=(
 
 FILES_SCANNED=0
 SUSPECT_FILES=0
+SUSPECT_DETAILS=()
 
 info() { echo -e "${BLUE}[INFO]${NC} $*"; }
 warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
@@ -75,11 +76,13 @@ scan_php_file() {
     local file="$1"
     local flagged=0
     local file_name
+    local matches=()
     file_name="$(basename "$file")"
 
     for shell_name in "${KNOWN_SHELL_NAMES[@]}"; do
         if [[ "$file_name" == "$shell_name" ]]; then
             bad "Known shell filename: $file"
+            matches+=("known-name:$shell_name")
             flagged=1
             break
         fi
@@ -88,12 +91,14 @@ scan_php_file() {
     for pattern in "${PHP_SHELL_PATTERNS[@]}"; do
         if grep -qiE "$pattern" "$file" 2>/dev/null; then
             bad "Pattern match in $file -> $pattern"
+            matches+=("pattern:$pattern")
             flagged=1
         fi
     done
 
     if [[ "$flagged" -eq 1 ]]; then
         ((SUSPECT_FILES+=1))
+        SUSPECT_DETAILS+=("$file | ${matches[*]}")
     fi
 }
 
@@ -138,6 +143,11 @@ main() {
     info "Suspicious files: $SUSPECT_FILES"
 
     if [[ "$SUSPECT_FILES" -gt 0 ]]; then
+        echo ""
+        bad "Suspicious file details:"
+        for item in "${SUSPECT_DETAILS[@]}"; do
+            bad " - $item"
+        done
         bad "Potential webshell indicators found"
         exit 1
     fi
