@@ -1,9 +1,3 @@
-$scoringUsers = @("User.One", "User.Two", "Administrator")
-
-Write-Host "HAVE YOU SET THE SCORING USERS??? IF NOT GO SET THEM NOW, THEN COME BACK AND RUN THIS SCRIPT"
-Read-Host -Prompt "Press Enter to Continue, or Ctrl+C to Exit"
-
-
 curl.exe -o 'Windows Server 2022 Security Baseline.zip' 'https://download.microsoft.com/download/8/5/c/85c25433-a1b0-4ffa-9429-7e023e7da8d8/Windows%20Server%202022%20Security%20Baseline.zip'
 Expand-Archive -Path 'Windows Server 2022 Security Baseline.zip' -DestinationPath 'C:\Security Baseline' -force 
 curl.exe -o 'Windows 10 Version 1809 and Windows Server 2019 Security Baseline.zip' 'https://download.microsoft.com/download/8/5/c/85c25433-a1b0-4ffa-9429-7e023e7da8d8/Windows%2010%20Version%201809%20and%20Windows%20Server%202019%20Security%20Baseline.zip' 
