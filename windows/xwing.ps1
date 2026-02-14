@@ -457,9 +457,9 @@ Start-LoggedJob -JobName "Upgrade SMB" -ScriptBlock {
 
 start-loggedjob -JobName "Backup DNS Zones" -ScriptBlock {
     try{
-        get-dnsserverzone | ForEach-Object{
-            Export-DnsServerZone -Name $_.ZoneName -FileName "C:\users\Administrator\desktop\dns$($_.ZoneName).dns"
-        }
+
+        Export-DnsServerZone -Name 'ccdcteam.com' -FileName "C:\users\Administrator\desktop\dns$($_.ZoneName).dns"
+
         Write-Host "--------------------------------------------------------------------------------"
         Write-Host "DNS is backupped."
         Write-Host "--------------------------------------------------------------------------------"
