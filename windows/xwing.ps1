@@ -6,7 +6,6 @@ curl.exe -o 'Windows 11 v25H2 Security Baseline.zip' 'https://download.microsoft
 Expand-Archive -Path 'Windows 11 v25H2 Security Baseline.zip' -DestinationPath 'C:\Security Baseline' -force
 curl.exe -o 'LGPO.zip' 'https://download.microsoft.com/download/8/5/c/85c25433-a1b0-4ffa-9429-7e023e7da8d8/LGPO.zip'
 Expand-Archive -Path 'LGPO.zip' -DestinationPath 'C:\Security Baseline' -force
-new-adorganizationalunit -name "Win11Workstation" -path "DC=ccdcteam,DC=com"
-new-adorganizationalunit -name "Win22Server" -path "DC=ccdcteam,DC=com"
-new-adorganizationalunit -name "Win19Server" -path "DC=ccdcteam,DC=com"
-
+new-adorganizationalunit -name "Win11Workstation"
+new-adorganizationalunit -name "Win22Server"
+new-adorganizationalunit -name "Win19Server"
