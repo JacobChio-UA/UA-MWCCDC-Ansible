@@ -1,7 +1,7 @@
 Save-Script -name winget-install -path .\ -force
 winget-install.ps1
 Stop-Process -Name explorer -Force
-winget.exe install curl.curl -e --accept-source-agreements --accept-package-agreements
+winget.exe install cURL.cURL -e --accept-source-agreements --accept-package-agreements
 curl.exe -OL 'https://download.sysinternals.com/files/SysinternalsSuite.zip'
 Expand-Archive -Path SysinternalsSuite.zip -DestinationPath C:\SysinternalsSuite\ -Force
 winget.exe install WiresharkFoundation.Wireshark -e --accept-source-agreements --accept-package-agreements
