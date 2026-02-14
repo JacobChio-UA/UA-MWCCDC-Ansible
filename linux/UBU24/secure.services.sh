@@ -110,15 +110,26 @@ pkg_install() {
   case "$mgr" in
     apt)
       run "DEBIAN_FRONTEND=noninteractive apt-get update -y"
-      run "DEBIAN_FRONTEND=noninteractive apt-get install -y ${pkgs[*]}"
+      # Try to install packages, but don't fail if some aren't available
+      if [[ "$DRY_RUN" != "1" ]]; then
+        DEBIAN_FRONTEND=noninteractive apt-get install -y ${pkgs[*]} || {
+          warn "Some packages failed to install: ${pkgs[*]}"
+          warn "Attempting individual package installation..."
+          for pkg in "${pkgs[@]}"; do
+            DEBIAN_FRONTEND=noninteractive apt-get install -y "$pkg" 2>/dev/null || warn "  Failed: $pkg (skipping)"
+          done
+        }
+      else
+        echo "[DRY_RUN] apt-get install -y ${pkgs[*]}"
+      fi
       ;;
     dnf)
       run "dnf -y makecache"
-      run "dnf -y install ${pkgs[*]}"
+      run "dnf -y install ${pkgs[*]} || true"
       ;;
     yum)
       run "yum -y makecache"
-      run "yum -y install ${pkgs[*]}"
+      run "yum -y install ${pkgs[*]} || true"
       ;;
   esac
 }
@@ -299,7 +310,17 @@ harden_ufw_iptables() {
     fi
   fi
   
-  pkg_install "apt" ufw iptables iptables-persistent
+  # Install required packages (one at a time for better error handling)
+  log "Installing firewall packages..."
+  pkg_install "apt" ufw
+  pkg_install "apt" iptables
+  
+  # Try to install iptables-persistent (optional, for rule persistence)
+  if [[ "$DRY_RUN" != "1" ]]; then
+    DEBIAN_FRONTEND=noninteractive apt-get install -y iptables-persistent 2>/dev/null || {
+      log "iptables-persistent not available, will use manual save method"
+    }
+  fi
   
   run "ufw --force reset"
   run "ufw default deny incoming"
