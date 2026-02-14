@@ -32,18 +32,31 @@ log_error() { echo -e "${RED}[✗]${NC} $*"; }
 # Verify Ubuntu 24 LTS
 verify_ubuntu_24() {
     if [[ -f /etc/os-release ]]; then
-        if grep -q "VERSION_CODENAME=noble\|VERSION_ID=\"24" /etc/os-release; then
+        # Check for Ubuntu 24.04 LTS (Noble Numbat)
+        if grep -qE "VERSION_CODENAME=noble|VERSION_ID=\"24\.04\"" /etc/os-release; then
             UBUNTU_24_VERIFIED=true
-            log_success "Ubuntu Server 24 LTS detected"
+            log_success "Ubuntu Server 24 LTS (Noble Numbat) detected"
             return 0
         else
-            log_warn "System is not Ubuntu Server 24 LTS - compatibility may vary"
-            # Still allow execution on compatible distros
+            log_warn "WARNING: System is not Ubuntu Server 24 LTS"
+            # Check actual version
+            local version_id=$(grep "VERSION_ID=" /etc/os-release | cut -d'"' -f2)
+            local version_name=$(grep "VERSION_CODENAME=" /etc/os-release | cut -d'=' -f2)
+            log_warn "Detected: Ubuntu $version_id ($version_name)"
+            log_warn "This script is optimized for Ubuntu 24.04 LTS - compatibility may vary"
+            
+            # Still allow execution on Ubuntu/Debian
             if grep -qiE "ubuntu|debian" /etc/os-release; then
-                log_info "Compatible Debian-based system detected; proceeding"
+                log_info "Debian-based system detected; proceeding with caution"
                 return 0
+            else
+                log_error "Non-Ubuntu system detected - script may not function correctly"
+                return 1
             fi
         fi
+    else
+        log_error "Cannot detect OS version - /etc/os-release not found"
+        return 1
     fi
     return 0
 }
@@ -418,7 +431,10 @@ main() {
     echo ""
     
     # Verify Ubuntu 24 LTS
-    verify_ubuntu_24
+    if ! verify_ubuntu_24; then
+        log_error "OS verification failed - exiting"
+        exit 1
+    fi
     
     # Check if running as root
     if [[ $EUID -ne 0 ]]; then
