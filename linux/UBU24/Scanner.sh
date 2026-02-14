@@ -9,11 +9,12 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 WEB_DIRS=(
-    "/var/www"
     "/var/www/html"
-    "/usr/share/nginx/html"
-    "/home/*/public_html"
+    "/var/www/html/upload"
+    "/var/www/opencart"
 )
+
+PROGRESS_EVERY=200
 
 PHP_SHELL_PATTERNS=(
     "eval.*base64_decode"
@@ -66,6 +67,7 @@ Usage:
   $0 /custom/web/root /another/path
 
 If no paths are provided, default web directories are scanned.
+For OpenCart, you can run: $0 /var/www/html
 EOF
 }
 
@@ -101,10 +103,13 @@ scan_directory() {
 
     info "Scanning: $dir"
     while IFS= read -r -d '' php_file; do
-        if echo "$php_file" | grep -qE "backup|\.bak|\.old|\.backup|/\.|node_modules|vendor/phpunit"; then
+        if echo "$php_file" | grep -qE "backup|\.bak|\.old|\.backup|/\.|node_modules|vendor/phpunit|/image/cache/|/storage/cache/|/system/storage/cache/|/logs/"; then
             continue
         fi
         ((FILES_SCANNED+=1))
+        if (( FILES_SCANNED % PROGRESS_EVERY == 0 )); then
+            info "Progress: $FILES_SCANNED PHP files scanned..."
+        fi
         scan_php_file "$php_file"
     done < <(find "$dir" -type f -name "*.php" -print0 2>/dev/null || true)
 }
