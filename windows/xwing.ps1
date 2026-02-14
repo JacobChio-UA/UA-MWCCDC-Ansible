@@ -8,7 +8,9 @@ Expand-Archive -Path 'Windows 11 v25H2 Security Baseline.zip' -DestinationPath '
 New-Item -Path "C:\Security Baseline\ToImport" -ItemType Directory -Force
 
 #dialog to ask user to merge baselines
-start-process 'explorer.exe' -ArgumentList 'C:\Security Baseline\' -Wait
+start-process 'explorer.exe' -ArgumentList 'C:\Security Baseline\'
+Read-Host -Prompt "Press Enter once you have merged the baselines and are ready to import them into GPOs" | Out-Null
+
 
 try {
     new-adorganizationalunit -name "Win11Workstation"
