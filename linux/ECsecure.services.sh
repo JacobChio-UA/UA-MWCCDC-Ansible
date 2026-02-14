@@ -50,13 +50,7 @@ require_root() {
 
 detect_pkg_mgr() {
   if command -v apt-get >/dev/null 2>&1; then
-    # Verify Ubuntu 24 compatibility
-    if grep -qi "jammy\|noble" /etc/os-release 2>/dev/null; then
-      echo "apt"
-    else
-      warn "Not running on Ubuntu 22/24 LTS - package compatibility may be affected"
-      echo "apt"
-    fi
+    echo "apt"
   elif command -v dnf >/dev/null 2>&1; then
     echo "dnf"
   elif command -v yum >/dev/null 2>&1; then
@@ -143,6 +137,9 @@ chmod_with_fallback() {
     warn "Neither $primary nor $fallback exist"
   fi
 }
+
+}
+
 ###############################################################################
 # Main Hardening Functions
 ###############################################################################
@@ -294,13 +291,9 @@ harden_ufw_iptables() {
 }
 
 harden_apache2() {
-  log "Hardening Apache2 for OpenCart (Ubuntu 24)..."
+  log "Hardening Apache2 for OpenCart..."
   
-  # Ubuntu 24: Ensure we have latest repository packages
-  run "DEBIAN_FRONTEND=noninteractive apt-get update -y"
-  
-  # Install Apache2 and ModSecurity on Ubuntu 24
-  pkg_install "apt" apache2 apache2-utils libapache2-mod-security2 modsecurity-crs
+  pkg_install "apt" apache2 libapache2-mod-security2 modsecurity-crs
   
   backup_file "/etc/apache2/apache2.conf"
   
@@ -434,13 +427,13 @@ EOF
 }
 
 harden_php() {
-  log "Hardening PHP 8.3 configuration for OpenCart (Ubuntu 24)..."
+  log "Hardening PHP configuration for OpenCart..."
   
-  # Ubuntu 24 uses PHP 8.3 by default
-  pkg_install "apt" php8.3 php8.3-mysql php8.3-xml php8.3-json php8.3-gd php8.3-curl php8.3-mbstring php8.3-zip php8.3-cli libapache2-mod-php8.3
+  pkg_install "apt" php php-mysql php-xml php-json php-gd php-curl php-mbstring php-zip
   
-  # Ubuntu 24 PHP 8.3 location
-  local php_ini="/etc/php/8.3/apache2/php.ini"
+  # Find php.ini path
+  local php_ini
+  php_ini="$(php -r 'echo php_ini_loaded_file();' 2>/dev/null)" || php_ini="/etc/php/8.*/apache2/php.ini"
   
   if [[ -f "$php_ini" ]]; then
     backup_file "$php_ini"
@@ -462,21 +455,13 @@ harden_php() {
     run "sed -i 's/^post_max_size.*/post_max_size = 10M/' '$php_ini'"
   fi
   
-  # Also configure PHP CLI ini
-  local php_cli_ini="/etc/php/8.3/cli/php.ini"
-  if [[ -f "$php_cli_ini" ]]; then
-    backup_file "$php_cli_ini"
-    run "sed -i 's/^expose_php.*/expose_php = Off/' '$php_cli_ini'"
-  fi
-  
   run "systemctl restart apache2 || true"
 }
 
 harden_mariadb() {
-  log "Hardening MariaDB (Ubuntu 24)..."
+  log "Hardening MariaDB..."
   
-  # Ubuntu 24: MariaDB 10.11 or higher
-  pkg_install "apt" mariadb-server mariadb-client
+  pkg_install "apt" mariadb-server
   
   backup_file "/etc/mysql/mariadb.conf.d/50-server.cnf"
   
@@ -512,7 +497,7 @@ EOF
 }
 
 harden_fail2ban() {
-  log "Installing and configuring Fail2Ban (Ubuntu 24)..."
+  log "Installing and configuring Fail2Ban..."
   
   pkg_install "apt" fail2ban
   
@@ -576,7 +561,7 @@ harden_user_accounts() {
 }
 
 harden_auditd() {
-  log "Installing and configuring auditd (Ubuntu 24)..."
+  log "Installing and configuring auditd..."
   
   pkg_install "apt" auditd audispd-plugins
   
@@ -600,19 +585,12 @@ EOF
 }
 
 harden_clamav() {
-  log "Installing and configuring ClamAV antivirus (Ubuntu 24)..."
+  log "Installing and configuring ClamAV antivirus..."
   
-  # Ubuntu 24: ClamAV with daemon
-  pkg_install "apt" clamav clamav-daemon clamav-freshclam clamav-base
+  pkg_install "apt" clamav clamav-daemon clamav-freshclam
   
-  # Secure ClamAV daemon configuration (Ubuntu 24 paths)
+  # Secure ClamAV daemon configuration
   backup_file "/etc/clamav/clamd.conf"
-  
-  # Ubuntu 24: Ensure ClamAV directories exist
-  run "mkdir -p /var/lib/clamav"
-  run "mkdir -p /var/log/clamav"
-  run "chown -R clamav:clamav /var/lib/clamav /var/log/clamav"
-  run "chmod 755 /var/lib/clamav /var/log/clamav"
   
   # Set proper permissions
   run "chmod 644 /etc/clamav/clamd.conf"
@@ -695,7 +673,7 @@ EOF
   run "systemctl restart clamav-freshclam 2>/dev/null || true"
   run "systemctl restart clamav-daemon 2>/dev/null || true"
   
-  # Create a weekly scan script for web directory (Ubuntu 24)
+  # Create a weekly scan script for web directory
   cat > /etc/cron.weekly/clamav-scan <<'EOF'
 #!/bin/bash
 # Weekly ClamAV virus scan of web directory and common paths
@@ -713,7 +691,6 @@ SCAN_DIRS="/var/www/html /var/tmp /tmp"
 EOF
   
   run "chmod 755 /etc/cron.weekly/clamav-scan"
-  run "chown root:root /etc/cron.weekly/clamav-scan"
   
   log "ClamAV installed and configured with scheduled weekly scans"
   log "Virus signatures will auto-update every 12 hours"
@@ -772,13 +749,10 @@ EOF
     iptables -A INPUT -p tcp --tcp-flags SYN,FIN SYN,FIN -j DROP 2>/dev/null || true
   fi
   
-  # Ubuntu 24: Ensure apache2 module is enabled
-  run "a2enmod rewrite 2>/dev/null || true"
-  run "a2enmod mod_evasive 2>/dev/null || true"
   run "systemctl restart apache2 2>/dev/null || true"
   run "systemctl restart fail2ban 2>/dev/null || true"
   
-  log "Scanner blocking rules configured for Ubuntu 24"
+  log "Scanner blocking rules configured"
   log "Detected: nmap, masscan, nikto, sqlmap, nessus, openvas, acunetix, burp, metasploit, w3af, zap, dirbuster"
 }
 
@@ -790,18 +764,9 @@ main() {
   require_root
   
   log "=========================================="
-  log "Ubuntu 24 LTS Server - Ecommerce Hardening"
-  log "Security Hardening for OpenCart on Ubuntu 24"
+  log "Ubuntu 24 Server - Ecommerce Hardening"
   log "=========================================="
   log "DRY_RUN=$DRY_RUN"
-  
-  # Verify Ubuntu 24 compatibility
-  if ! grep -qi "noble\|24" /etc/os-release 2>/dev/null; then
-    warn "⚠️  This script is optimized for Ubuntu 24 LTS"
-    warn "Current system may not be fully compatible"
-  else
-    log "✓ Ubuntu 24 LTS detected"
-  fi
   
   # Core system hardening
   harden_ipv6
