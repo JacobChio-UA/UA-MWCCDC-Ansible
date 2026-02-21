@@ -36,3 +36,17 @@
   import_tasks: sshd.yaml
   when: rotatePubkey == false
 
+- name: Import UFW task
+  import_tasks: ufw.yaml
+  when: rotatePubkey == false
+  ignore_errors: true
+
+- name: Import Apache task
+  import_tasks: apache.yaml
+  when: rotatePubkey == false
+  ignore_errors: true
+
+- name: Import PHP task
+  import_tasks: php.yaml
+  when: rotatePubkey == false
+  ignore_errors: true

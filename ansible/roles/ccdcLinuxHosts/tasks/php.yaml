@@ -1,0 +1,82 @@
+---
+# Hardens PHP configuration to reduce attack surface
+
+- name: Find PHP ini files
+  ansible.builtin.find:
+    paths:
+      - /etc/php
+    patterns:
+      - "php.ini"
+    recurse: true
+  register: php_ini_files
+
+- name: Disable dangerous PHP functions
+  ansible.builtin.lineinfile:
+    dest: "{{ item.path }}"
+    regexp: "^disable_functions"
+    line: "disable_functions = exec,passthru,shell_exec,system,proc_open,popen,curl_exec,curl_multi_exec,parse_ini_file,show_source,pcntl_exec"
+    state: present
+  loop: "{{ php_ini_files.files }}"
+  when: php_ini_files.matched > 0
+  ignore_errors: true
+
+- name: Disable PHP version exposure
+  ansible.builtin.lineinfile:
+    dest: "{{ item.path }}"
+    regexp: "^expose_php"
+    line: "expose_php = Off"
+    state: present
+  loop: "{{ php_ini_files.files }}"
+  when: php_ini_files.matched > 0
+  ignore_errors: true
+
+- name: Disable PHP allow_url_fopen
+  ansible.builtin.lineinfile:
+    dest: "{{ item.path }}"
+    regexp: "^allow_url_fopen"
+    line: "allow_url_fopen = Off"
+    state: present
+  loop: "{{ php_ini_files.files }}"
+  when:
+    - php_ini_files.matched > 0
+    - phpDisableUrlFopen == true
+  ignore_errors: true
+
+- name: Disable PHP allow_url_include
+  ansible.builtin.lineinfile:
+    dest: "{{ item.path }}"
+    regexp: "^allow_url_include"
+    line: "allow_url_include = Off"
+    state: present
+  loop: "{{ php_ini_files.files }}"
+  when: php_ini_files.matched > 0
+  ignore_errors: true
+
+- name: Set PHP session cookie httponly
+  ansible.builtin.lineinfile:
+    dest: "{{ item.path }}"
+    regexp: "^session.cookie_httponly"
+    line: "session.cookie_httponly = 1"
+    state: present
+  loop: "{{ php_ini_files.files }}"
+  when: php_ini_files.matched > 0
+  ignore_errors: true
+
+- name: Set PHP session cookie secure
+  ansible.builtin.lineinfile:
+    dest: "{{ item.path }}"
+    regexp: "^session.cookie_secure"
+    line: "session.cookie_secure = 1"
+    state: present
+  loop: "{{ php_ini_files.files }}"
+  when:
+    - php_ini_files.matched > 0
+    - phpSecureCookies == true
+  ignore_errors: true
+
+- name: Restart Apache after PHP hardening
+  ansible.builtin.service:
+    name: "{{ 'apache2' if ansible_facts['os_family'] == 'Debian' else 'httpd' }}"
+    state: restarted
+  when: php_ini_files.matched > 0
+  ignore_errors: true

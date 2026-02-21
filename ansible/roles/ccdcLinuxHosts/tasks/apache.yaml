@@ -1,0 +1,114 @@
+---
+# Hardens Apache web server configuration and ensures the service is running
+
+- name: Install Apache
+  ansible.builtin.package:
+    name: apache2
+    state: present
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Install Apache (RedHat/CentOS)
+  ansible.builtin.package:
+    name: httpd
+    state: present
+  when: ansible_facts['os_family'] == "RedHat"
+
+- name: Enable Apache security module (Debian)
+  community.general.apache2_module:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - headers
+    - rewrite
+  notify: Restart apache2
+  when: ansible_facts['os_family'] == "Debian"
+  ignore_errors: true
+
+- name: Disable server version disclosure (ServerTokens) — Debian
+  ansible.builtin.lineinfile:
+    dest: /etc/apache2/conf-available/security.conf
+    regexp: "^ServerTokens"
+    line: "ServerTokens Prod"
+    state: present
+  notify: Restart apache2
+  when: ansible_facts['os_family'] == "Debian"
+  ignore_errors: true
+
+- name: Disable server signature (ServerSignature) — Debian
+  ansible.builtin.lineinfile:
+    dest: /etc/apache2/conf-available/security.conf
+    regexp: "^ServerSignature"
+    line: "ServerSignature Off"
+    state: present
+  notify: Restart apache2
+  when: ansible_facts['os_family'] == "Debian"
+  ignore_errors: true
+
+- name: Set Apache security headers — Debian
+  ansible.builtin.blockinfile:
+    path: /etc/apache2/conf-available/security.conf
+    marker: "# {mark} ANSIBLE MANAGED SECURITY HEADERS"
+    block: |
+      Header always set X-Content-Type-Options "nosniff"
+      Header always set X-Frame-Options "SAMEORIGIN"
+      Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  notify: Restart apache2
+  when: ansible_facts['os_family'] == "Debian"
+  ignore_errors: true
+
+- name: Disable directory listing in Apache — Debian
+  ansible.builtin.replace:
+    path: /etc/apache2/apache2.conf
+    regexp: 'Options\s+Indexes'
+    replace: 'Options -Indexes'
+  notify: Restart apache2
+  when: ansible_facts['os_family'] == "Debian"
+  ignore_errors: true
+
+- name: Disable server version disclosure (ServerTokens) — RedHat
+  ansible.builtin.lineinfile:
+    dest: /etc/httpd/conf/httpd.conf
+    regexp: "^ServerTokens"
+    line: "ServerTokens Prod"
+    state: present
+  notify: Restart apache2
+  when: ansible_facts['os_family'] == "RedHat"
+  ignore_errors: true
+
+- name: Disable server signature (ServerSignature) — RedHat
+  ansible.builtin.lineinfile:
+    dest: /etc/httpd/conf/httpd.conf
+    regexp: "^ServerSignature"
+    line: "ServerSignature Off"
+    state: present
+  notify: Restart apache2
+  when: ansible_facts['os_family'] == "RedHat"
+  ignore_errors: true
+
+- name: Set Apache security headers — RedHat
+  ansible.builtin.blockinfile:
+    path: /etc/httpd/conf.d/security.conf
+    create: true
+    marker: "# {mark} ANSIBLE MANAGED SECURITY HEADERS"
+    block: |
+      Header always set X-Content-Type-Options "nosniff"
+      Header always set X-Frame-Options "SAMEORIGIN"
+      Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  notify: Restart apache2
+  when: ansible_facts['os_family'] == "RedHat"
+  ignore_errors: true
+
+- name: Disable directory listing in Apache — RedHat
+  ansible.builtin.replace:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: 'Options\s+Indexes'
+    replace: 'Options -Indexes'
+  notify: Restart apache2
+  when: ansible_facts['os_family'] == "RedHat"
+  ignore_errors: true
+
+- name: Ensure Apache service is started and enabled
+  ansible.builtin.service:
+    name: "{{ 'apache2' if ansible_facts['os_family'] == 'Debian' else 'httpd' }}"
+    state: started
+    enabled: true
