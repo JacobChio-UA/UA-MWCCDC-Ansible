@@ -11,5 +11,8 @@ The tasks it performs are the following:
 - Use SHA256 hashes in shadow file
 - Log privilege escalation events and user logins
 - Common SSHD hardening
+- Configure UFW firewall (default deny, allow SSH/HTTP/HTTPS)
+- Harden Apache web server (disable info disclosure, set security headers, ensure service running)
+- Harden PHP configuration (disable dangerous functions, restrict remote file includes)
 
 View the `defaults` directory to customize the role's behaviors.

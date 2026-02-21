@@ -15,6 +15,12 @@ bootstrap: true
 # Enable logging high-volume events in auditd
 auditdHighVolumeEvents: true
 
+# PHP hardening options
+# Disable allow_url_fopen (set to false if your app fetches remote resources via PHP)
+phpDisableUrlFopen: true
+# Enforce HTTPS-only session cookies (set to false if running HTTP only)
+phpSecureCookies: true
+
 ############################
 ###   ADVANCED OPTIONS   ###
 ############################
