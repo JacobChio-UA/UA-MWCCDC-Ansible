@@ -1,0 +1,5 @@
+# pack-refs with: peeled fully-peeled sorted 
+9a7c4336fa409d976b7f79732e91376d30c2076b refs/heads/copilot/secure-apache-server-configuration
+16cb7980c19b026dd7ffdcadebc41b0bf718d988 refs/heads/main
+9a7c4336fa409d976b7f79732e91376d30c2076b refs/pull/1/head
+5376a2af2c9ae6029207e5f9249f3489fec54f2e refs/pull/1/merge
